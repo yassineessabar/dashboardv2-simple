@@ -38,7 +38,9 @@ const menuItems = [
   { href: "/withdraw", icon: LogOut, label: "Withdraw", hidden: true },
   { href: "/kyc", icon: FileCheck, label: "KYC Verification", hidden: true },
   { href: "/affiliate", icon: Users2, label: "Affiliate", hidden: true },
-  { href: "/about", icon: Info, label: "About Us" },
+  //{ href: "/about", icon: Info, label: "About Us" },
+{ href: "https://www.sigmatic-trading.com/", icon: Info, label: "About Us", linkProps: { target: "_blank", rel: "noopener noreferrer" } },
+
   { href: "/faq", icon: HelpCircle, label: "FAQ" },
   { href: "/contact", icon: MessageSquare, label: "Contact us" },
   { href: "/legal", icon: Shield, label: "Legal Documents" },

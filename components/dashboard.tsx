@@ -78,7 +78,10 @@ export function Dashboard() {
                     </div>
                     <Button variant="ghost" className="text-white hover:bg-white hover:bg-opacity-10">
                       <BarChart2 className="h-5 w-5 mr-2" />
-                      View Details
+                    <a href="https://cdn.prod.website-files.com/67872a3e14306e08566145ab/67c1a5ae6c1fc283344e0774_Strategy%20Tester_%20sigmatic_mg3.5_cps.pdf" target="_blank">
+                     View Details
+                    </a>
+                     
                     </Button>
                   </div>
                 </CardHeader>
@@ -174,11 +177,14 @@ export function Dashboard() {
                     </p>
                   </div>
                   <Button
+
                     onClick={handleDownloadReport}
                     className="bg-white text-gray-800 hover:bg-gray-200 transition-colors duration-300 flex items-center gap-2 px-4 py-2 md:px-6 md:py-3 rounded-full shadow-md hover:shadow-lg"
                   >
                     <FileDown className="h-5 w-5" />
+                    <a href="https://cdn.prod.website-files.com/67872a3e14306e08566145ab/67c1a5ae6c1fc283344e0774_Strategy%20Tester_%20sigmatic_mg3.5_cps.pdf" target="_blank">
                     Download PDF
+                    </a>
                   </Button>
                 </CardContent>
               </Card>
