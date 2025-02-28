@@ -1,8 +1,9 @@
 import { NextResponse } from "next/server"
 import nodemailer from "nodemailer"
-import os from "os"
-import path from "path"
-import { writeFile } from "fs/promises"
+// Remove unused imports that are causing issues in Vercel
+// import os from "os"
+// import path from "path"
+// import { writeFile } from "fs/promises"
 import { randomUUID } from "crypto"
 
 export async function POST(req: Request) {
@@ -42,11 +43,16 @@ export async function POST(req: Request) {
     if (identityDocument) {
       fileProcessingPromises.push(
         (async () => {
-          const buffer = Buffer.from(await identityDocument.arrayBuffer())
-          attachments.push({
-            filename: identityDocument.name,
-            content: buffer
-          })
+          try {
+            const buffer = Buffer.from(await identityDocument.arrayBuffer())
+            attachments.push({
+              filename: identityDocument.name,
+              content: buffer,
+              contentType: identityDocument.type // Add content type for better MIME handling
+            })
+          } catch (err) {
+            console.error("Error processing identity document:", err)
+          }
         })()
       )
     }
@@ -54,11 +60,16 @@ export async function POST(req: Request) {
     if (proofOfAddress) {
       fileProcessingPromises.push(
         (async () => {
-          const buffer = Buffer.from(await proofOfAddress.arrayBuffer())
-          attachments.push({
-            filename: proofOfAddress.name,
-            content: buffer
-          })
+          try {
+            const buffer = Buffer.from(await proofOfAddress.arrayBuffer())
+            attachments.push({
+              filename: proofOfAddress.name,
+              content: buffer,
+              contentType: proofOfAddress.type // Add content type for better MIME handling
+            })
+          } catch (err) {
+            console.error("Error processing proof of address:", err)
+          }
         })()
       )
     }
@@ -86,19 +97,23 @@ Consent Given: ${consentGiven === "true" ? "Yes" : "No"}
       priority: 'high'
     }
 
-    // Start the response early - we don't need to wait for the email to be sent
-    // This improves perceived performance for the user
-    const emailPromise = transporter.sendMail(mailOptions)
+    // IMPORTANT CHANGE: Wait for the email to be sent before responding
+    // This is critical for Vercel serverless functions
+    try {
+      const info = await transporter.sendMail(mailOptions)
+      console.log("Email sent successfully:", info.messageId)
+      return NextResponse.json({ 
+        message: "Email sent successfully", 
+        messageId: info.messageId 
+      }, { status: 200 })
+    } catch (emailError) {
+      console.error("Error sending email:", emailError)
+      return NextResponse.json({ 
+        message: "Error sending email", 
+        error: String(emailError) 
+      }, { status: 500 })
+    }
     
-    // Return the response immediately while the email sends in the background
-    const response = NextResponse.json({ message: "Form processed successfully" }, { status: 200 })
-    
-    // We still want to log any email sending errors
-    emailPromise.catch(error => {
-      console.error("Error sending email (background):", error)
-    })
-    
-    return response
   } catch (error) {
     console.error("Error processing form:", error)
     return NextResponse.json({ 
@@ -108,8 +123,7 @@ Consent Given: ${consentGiven === "true" ? "Yes" : "No"}
   }
 }
 
-// Helper function to get file extension
+// Helper function to get file extension if needed
 function getExtension(filename: string): string {
-  const ext = path.extname(filename)
-  return ext ? ext : ''
+  return filename.substring(filename.lastIndexOf('.')) || ''
 }
