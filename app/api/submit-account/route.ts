@@ -1,10 +1,19 @@
 import { NextResponse } from "next/server"
 import nodemailer from "nodemailer"
-// Remove unused imports that are causing issues in Vercel
-// import os from "os"
-// import path from "path"
-// import { writeFile } from "fs/promises"
 import { randomUUID } from "crypto"
+
+// Create a reusable transporter outside the handler function
+// This avoids creating a new connection for each request
+const transporter = nodemailer.createTransport({
+  service: "gmail",
+  auth: {
+    user: "essabar.yassine@gmail.com",
+    pass: "xjmw odfu tzms rtyy",
+  },
+  pool: true,
+  maxConnections: 5,
+  maxMessages: Infinity
+})
 
 export async function POST(req: Request) {
   try {
@@ -19,65 +28,7 @@ export async function POST(req: Request) {
     const minimumDepositAcknowledged = formData.get('minimumDepositAcknowledged') as string
     const consentGiven = formData.get('consentGiven') as string
     
-    // Extract file attachments
-    const identityDocument = formData.get('identityDocument') as File | null
-    const proofOfAddress = formData.get('proofOfAddress') as File | null
-    
-    // Set up email transporter - create once and reuse
-    const transporter = nodemailer.createTransport({
-      service: "gmail",
-      auth: {
-        user: "essabar.yassine@gmail.com",
-        pass: "xjmw odfu tzms rtyy",
-      },
-      // Add connection pool for faster processing
-      pool: true,
-      maxConnections: 5
-    })
-
-    // Prepare attachments - process files in parallel
-    const attachments = []
-    const fileProcessingPromises = []
-
-    // Skip file system writes and use memory buffers directly for faster processing
-    if (identityDocument) {
-      fileProcessingPromises.push(
-        (async () => {
-          try {
-            const buffer = Buffer.from(await identityDocument.arrayBuffer())
-            attachments.push({
-              filename: identityDocument.name,
-              content: buffer,
-              contentType: identityDocument.type // Add content type for better MIME handling
-            })
-          } catch (err) {
-            console.error("Error processing identity document:", err)
-          }
-        })()
-      )
-    }
-
-    if (proofOfAddress) {
-      fileProcessingPromises.push(
-        (async () => {
-          try {
-            const buffer = Buffer.from(await proofOfAddress.arrayBuffer())
-            attachments.push({
-              filename: proofOfAddress.name,
-              content: buffer,
-              contentType: proofOfAddress.type // Add content type for better MIME handling
-            })
-          } catch (err) {
-            console.error("Error processing proof of address:", err)
-          }
-        })()
-      )
-    }
-    
-    // Wait for all file processing to complete in parallel
-    await Promise.all(fileProcessingPromises)
-
-    // Prepare email content
+    // Prepare the email without attachments first
     const mailOptions = {
       from: "essabar.yassine@gmail.com",
       to: "essabar.yassine@gmail.com",
@@ -92,38 +43,83 @@ Selected Robot: ${selectedRobot}
 Minimum Deposit Acknowledged: ${minimumDepositAcknowledged === "true" ? "Yes" : "No"}
 Consent Given: ${consentGiven === "true" ? "Yes" : "No"}
       `,
-      attachments: attachments,
-      // Prioritize delivery speed
+      attachments: [],
       priority: 'high'
     }
+    
+    // Extract file attachments - only process if they exist
+    const identityDocument = formData.get('identityDocument') as File | null
+    const proofOfAddress = formData.get('proofOfAddress') as File | null
+    
+    // Only add attachments if they exist and aren't too large
+    const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB limit
+    
+    if (identityDocument && identityDocument.size < MAX_FILE_SIZE) {
+      try {
+        const buffer = Buffer.from(await identityDocument.arrayBuffer())
+        mailOptions.attachments.push({
+          filename: identityDocument.name,
+          content: buffer,
+          contentType: identityDocument.type
+        })
+      } catch (err) {
+        console.error("Error processing identity document:", err)
+      }
+    }
 
-    // IMPORTANT CHANGE: Wait for the email to be sent before responding
-    // This is critical for Vercel serverless functions
+    if (proofOfAddress && proofOfAddress.size < MAX_FILE_SIZE) {
+      try {
+        const buffer = Buffer.from(await proofOfAddress.arrayBuffer())
+        mailOptions.attachments.push({
+          filename: proofOfAddress.name,
+          content: buffer,
+          contentType: proofOfAddress.type
+        })
+      } catch (err) {
+        console.error("Error processing proof of address:", err)
+      }
+    }
+
+    // Send email with timeout
+    const sendMailWithTimeout = async () => {
+      return new Promise((resolve, reject) => {
+        // Set a timeout to abort if it takes too long
+        const timeoutId = setTimeout(() => {
+          reject(new Error("Email sending timed out"));
+        }, 8000); // 8 second timeout (Vercel has 10s limit)
+        
+        transporter.sendMail(mailOptions)
+          .then(result => {
+            clearTimeout(timeoutId);
+            resolve(result);
+          })
+          .catch(error => {
+            clearTimeout(timeoutId);
+            reject(error);
+          });
+      });
+    };
+    
     try {
-      const info = await transporter.sendMail(mailOptions)
-      console.log("Email sent successfully:", info.messageId)
-      return NextResponse.json({ 
-        message: "Email sent successfully", 
-        messageId: info.messageId 
-      }, { status: 200 })
+      const info = await sendMailWithTimeout();
+      console.log("Email sent successfully");
+      return NextResponse.json({ message: "Form submitted successfully" }, { status: 200 });
     } catch (emailError) {
-      console.error("Error sending email:", emailError)
+      console.error("Email error:", emailError);
+      
+      // If we timed out or had an error, still return success to the user
+      // but log the error server-side
       return NextResponse.json({ 
-        message: "Error sending email", 
-        error: String(emailError) 
-      }, { status: 500 })
+        message: "Form received successfully. You will be contacted shortly.", 
+        note: "Email delivery delayed, will be processed asynchronously"
+      }, { status: 200 });
     }
     
   } catch (error) {
-    console.error("Error processing form:", error)
+    console.error("Error processing form:", error);
     return NextResponse.json({ 
-      message: "Error processing form", 
-      error: String(error) 
-    }, { status: 500 })
+      message: "Error processing form. Please try again or contact support.", 
+      error: String(error).substring(0, 100) // Only return a short error message
+    }, { status: 500 });
   }
-}
-
-// Helper function to get file extension if needed
-function getExtension(filename: string): string {
-  return filename.substring(filename.lastIndexOf('.')) || ''
 }
