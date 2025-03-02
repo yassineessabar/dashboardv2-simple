@@ -2,14 +2,16 @@
 
 import { useState } from "react"
 import { motion } from "framer-motion"
-import { User, Mail, Upload, CheckCircle, AlertTriangle } from "lucide-react"
+import { User, Mail, Upload, CheckCircle, AlertTriangle, Phone } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Alert, AlertDescription } from "@/components/ui/alert"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 
 export function StepZero({ formData, updateFormData }) {
   const [emailError, setEmailError] = useState("")
+  const [phoneError, setPhoneError] = useState("")
   const [fileUploads, setFileUploads] = useState({
     identityDocument: null,
     proofOfAddress: null,
@@ -18,6 +20,12 @@ export function StepZero({ formData, updateFormData }) {
   const validateEmail = (email: string) => {
     const re = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/
     return re.test(String(email).toLowerCase())
+  }
+
+  const validatePhone = (phone: string) => {
+    // Basic phone validation - can be adjusted based on requirements
+    const re = /^\d{6,15}$/
+    return re.test(String(phone).replace(/\s+/g, ''))
   }
 
   const handleFileUpload = (field: string, file: File) => {
@@ -30,6 +38,30 @@ export function StepZero({ formData, updateFormData }) {
     animate: { opacity: 1, y: 0 },
     transition: { duration: 0.5 },
   }
+
+  // Country codes with flags
+  const countryCodes = [
+    { code: "+1", country: "US/Canada", flag: "🇺🇸" },
+    { code: "+44", country: "UK", flag: "🇬🇧" },
+    { code: "+49", country: "Germany", flag: "🇩🇪" },
+    { code: "+33", country: "France", flag: "🇫🇷" },
+    { code: "+61", country: "Australia", flag: "🇦🇺" },
+    { code: "+91", country: "India", flag: "🇮🇳" },
+    { code: "+86", country: "China", flag: "🇨🇳" },
+    { code: "+971", country: "UAE", flag: "🇦🇪" },
+    { code: "+27", country: "South Africa", flag: "🇿🇦" },
+    { code: "+234", country: "Nigeria", flag: "🇳🇬" },
+    { code: "+55", country: "Brazil", flag: "🇧🇷" },
+    { code: "+52", country: "Mexico", flag: "🇲🇽" },
+    { code: "+81", country: "Japan", flag: "🇯🇵" },
+    { code: "+82", country: "South Korea", flag: "🇰🇷" },
+    { code: "+65", country: "Singapore", flag: "🇸🇬" },
+    { code: "+60", country: "Malaysia", flag: "🇲🇾" },
+    { code: "+39", country: "Italy", flag: "🇮🇹" },
+    { code: "+34", country: "Spain", flag: "🇪🇸" },
+    { code: "+7", country: "Russia", flag: "🇷🇺" },
+    { code: "+31", country: "Netherlands", flag: "🇳🇱" },
+  ]
 
   return (
     <motion.div
@@ -106,6 +138,71 @@ export function StepZero({ formData, updateFormData }) {
               </p>
             </motion.div>
 
+            {/* WhatsApp Phone Number Field with Smaller Flag Box */}
+            <motion.div className="space-y-2" variants={fadeInUp}>
+              <Label htmlFor="whatsappNumber" className="text-sm font-medium text-gray-700">
+                WhatsApp Number
+              </Label>
+              <div className="flex gap-2">
+                <div className="w-[100px]"> {/* Reduced width from 1/3 to fixed 100px */}
+                  <Select 
+                    value={formData.countryCode || "+1"} 
+                    onValueChange={(value) => updateFormData({ countryCode: value })}
+                  >
+                    <SelectTrigger className="px-2"> {/* Reduced padding */}
+                      <SelectValue placeholder="Code">
+                        {formData.countryCode && (
+                          <div className="flex items-center">
+                            <span className="mr-1 text-base leading-none">
+                              {countryCodes.find(c => c.code === formData.countryCode)?.flag || "🇺🇸"}
+                            </span>
+                          </div>
+                        )}
+                      </SelectValue>
+                    </SelectTrigger>
+                    <SelectContent className="max-h-[300px]">
+                      {countryCodes.map((country) => (
+                        <SelectItem key={country.code} value={country.code}>
+                          <div className="flex items-center">
+                            <span className="mr-2">{country.flag}</span>
+                            <span>{country.code}</span>
+                          </div>
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="relative flex-1">
+                  <Input
+                    id="whatsappNumber"
+                    type="tel"
+                    value={formData.whatsappNumber || ""}
+                    onChange={(e) => {
+                      const newPhone = e.target.value
+                      updateFormData({ whatsappNumber: newPhone })
+                      if (newPhone && !validatePhone(newPhone)) {
+                        setPhoneError("Please enter a valid phone number")
+                      } else {
+                        setPhoneError("")
+                      }
+                    }}
+                    placeholder="Enter your WhatsApp number"
+                    className={`pl-10 ${phoneError ? "border-red-500" : ""}`}
+                  />
+                  <Phone className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
+                </div>
+              </div>
+              {phoneError && (
+                <p className="text-sm text-red-500 mt-1 flex items-center">
+                  <AlertTriangle className="h-4 w-4 mr-1" />
+                  {phoneError}
+                </p>
+              )}
+              <p className="text-sm text-gray-500 mt-2">
+                We'll use this for faster communication and important notifications about your trades.
+              </p>
+            </motion.div>
+
             <motion.div className="space-y-4" variants={fadeInUp}>
               <Label className="text-sm font-medium text-gray-700">Document Upload</Label>
               <div className="grid gap-4 sm:grid-cols-2">
@@ -173,4 +270,3 @@ function FileUploadCard({ id, label, description, file, onFileUpload }) {
     </Card>
   )
 }
-
