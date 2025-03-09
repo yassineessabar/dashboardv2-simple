@@ -1,24 +1,32 @@
-import { redirect } from "next/navigation"
-import { getCurrentUser } from "@/lib/auth"
-import { AuthForm } from "@/components/auth-form"
+import { NextResponse } from "next/server";
+import { getCurrentUser } from "@/lib/auth";
 
-export default async function AuthPage() {
-  const user = await getCurrentUser()
+export async function GET() {
+  try {
+    const user = await getCurrentUser();
 
-  // If user is already logged in, redirect to dashboard
-  if (user) {
-    redirect("/")
+    // If no user found, return 401 Unauthorized
+    if (!user) {
+      return NextResponse.json(
+        { error: "Authentication required" },
+        { status: 401 }
+      );
+    }
+
+    // Return the user profile data as JSON
+    return NextResponse.json({
+      user: {
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        // Include any other user fields you need
+      }
+    });
+  } catch (error) {
+    console.error("Profile API error:", error);
+    return NextResponse.json(
+      { error: "Failed to fetch user profile" },
+      { status: 500 }
+    );
   }
-
-  return (
-    <div className="flex min-h-screen items-center justify-center bg-gray-50">
-      <div className="w-full max-w-md p-8 space-y-8 bg-white rounded-lg shadow">
-        <div className="text-center">
-          <h1 className="text-3xl font-extrabold">Welcome</h1>
-          <p className="mt-2 text-gray-600">Sign in to access your dashboard</p>
-        </div>
-        <AuthForm />
-      </div>
-    </div>
-  )
 }
