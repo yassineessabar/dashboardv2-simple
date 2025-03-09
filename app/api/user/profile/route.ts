@@ -1,3 +1,4 @@
+// app/api/user/profile/route.ts
 import { NextResponse } from "next/server";
 import { getCurrentUser } from "@/lib/auth";
 
@@ -15,6 +16,7 @@ export async function GET() {
 
     // Return the user profile data as JSON
     return NextResponse.json({
+      success: true,
       user: {
         id: user.id,
         name: user.name,
