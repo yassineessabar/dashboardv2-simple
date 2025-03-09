@@ -4,6 +4,9 @@ import clientPromise from "@/lib/mongodb"
 import { SignJWT } from "jose"
 import { sendPasswordResetEmail } from "@/lib/email"
 
+// Mark this route as dynamic
+export const dynamic = 'force-dynamic';
+
 // Environment variables
 const JWT_SECRET = process.env.NEXTAUTH_SECRET || "your-secret-key"
 const BASE_URL = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3002"
@@ -56,7 +59,12 @@ export async function POST(request: Request) {
       console.log("Password reset link:", resetLink)
       
       // Send the password reset email
-      await sendPasswordResetEmail(email, resetLink)
+      try {
+        await sendPasswordResetEmail(email, resetLink)
+      } catch (emailError) {
+        console.error("Failed to send email:", emailError)
+        // Continue execution even if email fails
+      }
     }
 
     // Return success response regardless of whether the user exists

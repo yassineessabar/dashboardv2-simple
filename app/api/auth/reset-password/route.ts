@@ -4,6 +4,9 @@ import clientPromise from "@/lib/mongodb"
 import bcrypt from "bcryptjs"
 import { ObjectId } from "mongodb"
 
+// Mark this route as dynamic
+export const dynamic = 'force-dynamic';
+
 // Environment variables
 const JWT_SECRET = process.env.NEXTAUTH_SECRET || "your-secret-key"
 
