@@ -76,8 +76,7 @@ export function StepZero({ formData, updateFormData }) {
       <motion.div className="text-center" variants={fadeInUp}>
         <h2 className="text-3xl font-bold mb-4 text-[#7497bd]">Welcome to Sigmatic Trading</h2>
         <p className="text-gray-600 mb-8 max-w-2xl mx-auto">
-          Let's get you started on your trading journey. Please provide some basic information to personalize your
-          experience.
+          Let's begin setting up your real trading account with our regulated broker. Please provide the necessary information to complete your account setup.
         </p>
       </motion.div>
 

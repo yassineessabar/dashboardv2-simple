@@ -125,7 +125,7 @@ export function DemoTutorial({ open, onOpenChange }: DemoTutorialProps) {
       content: (
         <div className="space-y-6">
           <div className="bg-gray-50 rounded-lg p-6">
-            <h3 className="font-medium mb-4 text-center">Enter the login credentials below:</h3>
+            <h3 className="font-medium mb-4 text-center">Now that you are in Server  'XMGlobal-Demo 2', <p> Enter the login credentials below:</p></h3>
             <div className="space-y-4">
               <div className="bg-white rounded-lg p-4 border border-gray-200">
                 <div className="flex items-center justify-between">

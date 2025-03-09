@@ -9,25 +9,101 @@ import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
+import { useToast } from "@/components/ui/use-toast"
 
 export default function AuthPage() {
   const [isLogin, setIsLogin] = useState(true)
   const [showPassword, setShowPassword] = useState(false)
   const [phoneNumber, setPhoneNumber] = useState("")
   const [countryCode, setCountryCode] = useState("+1")
-  const router = useRouter()
+  const [email, setEmail] = useState("")
+  const [password, setPassword] = useState("")
+  const [name, setName] = useState("")
+  const [isLoading, setIsLoading] = useState(false)
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const router = useRouter()
+  const { toast } = useToast()
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!isLogin) {
-      // Simulate a successful sign-up
-      localStorage.setItem("showDemoTutorial", "true")
-      router.push("/") // Redirect to dashboard
-    } else {
-      // Handle login logic here
-      console.log("Login submitted")
-      // Add login logic and redirection here
-      router.push("/") // Redirect to dashboard after successful login
+    setIsLoading(true)
+
+    try {
+      if (isLogin) {
+        // Handle login
+        const response = await fetch("/api/auth/login", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ email, password }),
+        })
+
+        const data = await response.json()
+
+        if (!response.ok) {
+          throw new Error(data.message || "Login failed")
+        }
+
+        toast({
+          title: "Login successful",
+          description: "Welcome back!",
+        })
+
+        router.push("/")
+        router.refresh()
+      } else {
+        // Handle registration
+        const response = await fetch("/api/auth/register", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            name,
+            email,
+            password,
+            phone: `${countryCode}${phoneNumber}`,
+          }),
+        })
+
+        const data = await response.json()
+
+        if (!response.ok) {
+          throw new Error(data.message || "Registration failed")
+        }
+
+        toast({
+          title: "Registration successful",
+          description: "Your account has been created.",
+        })
+
+        // Auto login after registration
+        const loginResponse = await fetch("/api/auth/login", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ email, password }),
+        })
+
+        if (loginResponse.ok) {
+          router.push("/")
+          router.refresh()
+        } else {
+          // If auto-login fails, redirect to login
+          setIsLogin(true)
+        }
+      }
+    } catch (error) {
+      console.error("Auth error:", error)
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "Authentication failed",
+        variant: "destructive",
+      })
+    } finally {
+      setIsLoading(false)
     }
   }
 
@@ -52,7 +128,16 @@ export default function AuthPage() {
                     <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                       <User className="h-5 w-5 text-gray-400" />
                     </div>
-                    <Input id="name" name="name" type="text" required className="pl-10" placeholder="John Doe" />
+                    <Input
+                      id="name"
+                      name="name"
+                      type="text"
+                      required
+                      className="pl-10"
+                      placeholder="John Doe"
+                      value={name}
+                      onChange={(e) => setName(e.target.value)}
+                    />
                   </div>
                 </div>
                 <div>
@@ -66,7 +151,7 @@ export default function AuthPage() {
                         <SelectItem value="+1">🇺🇸 +1</SelectItem>
                         <SelectItem value="+44">🇬🇧 +44</SelectItem>
                         <SelectItem value="+91">🇮🇳 +91</SelectItem>
-                        {/* Add more country codes as needed */}
+                        <SelectItem value="+61">🇦🇺 +61</SelectItem>
                       </SelectContent>
                     </Select>
                     <Input
@@ -90,7 +175,16 @@ export default function AuthPage() {
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                   <Mail className="h-5 w-5 text-gray-400" />
                 </div>
-                <Input id="email" name="email" type="email" required className="pl-10" placeholder="you@example.com" />
+                <Input
+                  id="email"
+                  name="email"
+                  type="email"
+                  required
+                  className="pl-10"
+                  placeholder="you@example.com"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                />
               </div>
             </div>
 
@@ -107,6 +201,8 @@ export default function AuthPage() {
                   required
                   className="pl-10 pr-10"
                   placeholder="••••••••"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
                 />
                 <div className="absolute inset-y-0 right-0 pr-3 flex items-center">
                   <button
@@ -121,9 +217,37 @@ export default function AuthPage() {
             </div>
 
             <div>
-              <Button type="submit" className="w-full bg-[#7497bd] hover:bg-[#5a7a9d] text-white">
-                {isLogin ? "Sign In" : "Sign Up"}
-                <ArrowRight className="ml-2 h-4 w-4" />
+              <Button type="submit" className="w-full bg-[#7497bd] hover:bg-[#5a7a9d] text-white" disabled={isLoading}>
+                {isLoading ? (
+                  <span className="flex items-center">
+                    <svg
+                      className="animate-spin -ml-1 mr-3 h-5 w-5 text-white"
+                      xmlns="http://www.w3.org/2000/svg"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                    >
+                      <circle
+                        className="opacity-25"
+                        cx="12"
+                        cy="12"
+                        r="10"
+                        stroke="currentColor"
+                        strokeWidth="4"
+                      ></circle>
+                      <path
+                        className="opacity-75"
+                        fill="currentColor"
+                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                      ></path>
+                    </svg>
+                    Processing...
+                  </span>
+                ) : (
+                  <>
+                    {isLogin ? "Sign In" : "Sign Up"}
+                    <ArrowRight className="ml-2 h-4 w-4" />
+                  </>
+                )}
               </Button>
             </div>
           </form>

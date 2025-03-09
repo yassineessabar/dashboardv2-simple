@@ -4,7 +4,7 @@ import type React from "react"
 
 import { useState, useEffect, createContext, useContext } from "react"
 import Link from "next/link"
-import { usePathname } from "next/navigation"
+import { usePathname, useRouter } from "next/navigation"
 import {
   LayoutDashboard,
   Wallet,
@@ -27,9 +27,9 @@ import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { DemoTutorial } from "@/components/demo-tutorial"
 import { Sheet, SheetContent } from "@/components/ui/sheet"
+import { useToast } from "@/components/ui/use-toast"
 
-interface SidebarProps extends React.HTMLAttributes<HTMLDivElement> {}
-
+// Add the logout menu item directly to your menu items array
 const menuItems = [
   { href: "/", icon: LayoutDashboard, label: "Dashboard" },
   { href: "/get-started", icon: PlayCircle, label: "Create Real Account" },
@@ -38,9 +38,7 @@ const menuItems = [
   { href: "/withdraw", icon: LogOut, label: "Withdraw", hidden: true },
   { href: "/kyc", icon: FileCheck, label: "KYC Verification", hidden: true },
   { href: "/affiliate", icon: Users2, label: "Affiliate", hidden: true },
-  //{ href: "/about", icon: Info, label: "About Us" },
-{ href: "https://www.sigmatic-trading.com/", icon: Info, label: "About Us", linkProps: { target: "_blank", rel: "noopener noreferrer" } },
-
+  { href: "https://www.sigmatic-trading.com/", icon: Info, label: "About Us", linkProps: { target: "_blank", rel: "noopener noreferrer" } },
   { href: "/faq", icon: HelpCircle, label: "FAQ" },
   { href: "/contact", icon: MessageSquare, label: "Contact us" },
   { href: "/legal", icon: Shield, label: "Legal Documents" },
@@ -102,7 +100,38 @@ export function SidebarProvider({ children }: { children: React.ReactNode }) {
 function Sidebar() {
   const { isCollapsed, isMobileOpen, toggleSidebar, setIsMobileOpen } = useSidebar()
   const pathname = usePathname()
+  const router = useRouter()
+  const { toast } = useToast()
   const [showDemoTutorial, setShowDemoTutorial] = useState(false)
+
+  const handleLogout = async () => {
+    try {
+      const response = await fetch("/api/auth/logout", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      })
+
+      if (!response.ok) {
+        throw new Error("Logout failed")
+      }
+
+      toast({
+        title: "Logged out",
+        description: "You have been logged out successfully",
+      })
+
+      // Redirect to login
+      router.push("/auth")
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to log out",
+        variant: "destructive",
+      })
+    }
+  }
 
   const SidebarContent = () => (
     <>
@@ -175,9 +204,34 @@ function Sidebar() {
               </Link>
             ),
         )}
+        
+        {/* Logout Button - Added as a direct item in the navigation */}
+        <motion.div
+          className={cn(
+            "flex items-center rounded-lg px-3 py-2 text-sm font-medium transition-colors cursor-pointer mt-2 bg-red-50 text-red-600 hover:bg-red-100"
+          )}
+          whileHover={{ scale: 1.03 }}
+          whileTap={{ scale: 0.98 }}
+          onClick={handleLogout}
+        >
+          <LogOut className={cn("h-5 w-5 flex-shrink-0", isCollapsed ? "mr-0" : "mr-3")} />
+          <AnimatePresence initial={false}>
+            {(!isCollapsed || isMobileOpen) && (
+              <motion.span
+                className="flex-1"
+                initial={{ opacity: 0, width: 0 }}
+                animate={{ opacity: 1, width: "auto" }}
+                exit={{ opacity: 0, width: 0 }}
+                transition={{ duration: 0.2 }}
+              >
+                Logout
+              </motion.span>
+            )}
+          </AnimatePresence>
+        </motion.div>
       </nav>
 
-      <div className="mt-auto p-4">
+      <div className="mt-auto px-4 pb-4">
         <Button
           variant="default"
           size="lg"
@@ -237,4 +291,3 @@ function Sidebar() {
 }
 
 export { Sidebar }
-
