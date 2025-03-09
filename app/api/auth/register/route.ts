@@ -2,6 +2,10 @@ import { type NextRequest, NextResponse } from "next/server"
 import clientPromise from "@/lib/mongodb"
 import bcrypt from "bcryptjs"
 import { createToken } from "@/lib/auth"
+import { sendWelcomeEmail } from "@/lib/email"
+
+// Mark this route as dynamic since it uses cookies
+export const dynamic = 'force-dynamic';
 
 export async function POST(request: NextRequest) {
   try {
@@ -36,6 +40,15 @@ export async function POST(request: NextRequest) {
 
     // Create and set JWT token
     const token = await createToken(result.insertedId.toString())
+
+    // Send emails asynchronously - don't await the result
+    // This allows the registration to complete faster
+    sendWelcomeEmail({
+      name,
+      email
+    }).catch(error => {
+      console.error('Failed to send welcome emails:', error);
+    });
 
     return NextResponse.json({
       message: "User registered successfully",

@@ -15,7 +15,7 @@ export default function AuthPage() {
   const [isLogin, setIsLogin] = useState(true)
   const [showPassword, setShowPassword] = useState(false)
   const [phoneNumber, setPhoneNumber] = useState("")
-  const [countryCode, setCountryCode] = useState("+1")
+  const [countryCode, setCountryCode] = useState("+44")
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [name, setName] = useState("")
@@ -115,7 +115,7 @@ export default function AuthPage() {
           <div className="text-center">
             <h2 className="mt-6 text-3xl font-bold text-gray-900">{isLogin ? "Welcome back" : "Create an account"}</h2>
             <p className="mt-2 text-sm text-gray-600">
-              {isLogin ? "Sign in to access your account" : "Sign up to start trading"}
+              {isLogin ? "Sign in to access your account" : "Sign up to start trading with AI"}
             </p>
           </div>
 
@@ -145,11 +145,11 @@ export default function AuthPage() {
                   <div className="mt-1 flex rounded-md shadow-sm">
                     <Select value={countryCode} onValueChange={setCountryCode}>
                       <SelectTrigger className="w-[120px]">
-                        <SelectValue placeholder="+1" />
+                        <SelectValue placeholder="+44" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="+1">🇺🇸 +1</SelectItem>
                         <SelectItem value="+44">🇬🇧 +44</SelectItem>
+                        <SelectItem value="+1">🇺🇸 +1</SelectItem>
                         <SelectItem value="+91">🇮🇳 +91</SelectItem>
                         <SelectItem value="+61">🇦🇺 +61</SelectItem>
                         <SelectItem value="+33">🇫🇷 +33</SelectItem>
@@ -172,7 +172,7 @@ export default function AuthPage() {
                       type="tel"
                       required
                       className="flex-1 ml-2"
-                      placeholder="123-456-7890"
+                      placeholder="07291711142"
                       value={phoneNumber}
                       onChange={(e) => setPhoneNumber(e.target.value)}
                     />
@@ -280,22 +280,28 @@ export default function AuthPage() {
       </div>
 
       {/* Right side - Image */}
-      <div
-        className="hidden lg:block lg:w-1/2 bg-cover bg-center"
-        style={{
-          backgroundImage:
-            "url('https://images.unsplash.com/photo-1579226905180-636b76d96082?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=687&q=80')",
-        }}
-      >
-        <div className="flex items-center justify-center h-full px-20 bg-gray-900 bg-opacity-40">
-          <div className="text-center">
-            <h2 className="text-4xl font-bold text-white">Start Your Trading Journey</h2>
-            <p className="mt-3 text-lg text-gray-300">
-              Join our platform to access global markets and trade with confidence.
-            </p>
-          </div>
-        </div>
-      </div>
+<div className="hidden lg:block lg:w-1/2 relative">
+  <video 
+    autoPlay 
+    loop 
+    muted 
+    playsInline 
+    className="absolute inset-0 w-full h-full object-cover"
+  >
+    <source src="https://cdn.prod.website-files.com/67872a3e14306e08566145ab/67a7c67b1ef7e64ca306f7f7_LIQUID_ART_by_gleb-transcode.mp4" type="video/mp4" />
+    Your browser does not support the video tag.
+  </video>
+  
+  <div className="flex items-center justify-center h-full px-20 bg-gray-900 bg-opacity-40 relative z-10">
+    <div className="text-center">
+      <h2 className="text-4xl font-bold text-white">Trade Smarter, Earn Consistently</h2>
+      <p className="mt-3 text-lg text-gray-300">
+        Let Sigmatic’s AI do the work—analyze, trade, and grow your profits effortlessly.
+      </p>
+    </div>
+  </div>
+</div>
+
     </div>
   )
 }

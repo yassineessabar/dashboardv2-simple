@@ -1,6 +1,6 @@
 import nodemailer from 'nodemailer';
 
-// Create email transporter with your specific Gmail configuration
+// Create email transporter with your Gmail configuration
 const transporter = nodemailer.createTransport({
   service: "gmail",
   auth: {
@@ -68,4 +68,62 @@ export async function sendPasswordResetEmail(email: string, resetLink: string): 
   `;
 
   return sendEmail({ to: email, subject, html });
+}
+
+/**
+ * Sends a welcome email to new users and a notification to the admin
+ */
+export async function sendWelcomeEmail(userData: { name: string, email: string }): Promise<boolean> {
+  // First, send welcome email to the new user
+  const userSubject = 'Welcome to Sigmatic Trading!';
+  
+  const userHtml = `
+    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+      <div style="background-color: #7497bd; padding: 20px; text-align: center; color: white;">
+        <h1 style="margin: 0;">Welcome to Sigmatic Trading</h1>
+      </div>
+      <div style="padding: 20px; border: 1px solid #e0e0e0; border-top: none;">
+        <p>Hello ${userData.name},</p>
+        <p>Thank you for signing up with Sigmatic Trading! We're excited to have you on board.</p>
+        <p>Your account has been successfully created and you can now log in to access our trading platform and features.</p>
+        <div style="text-align: center; margin: 25px 0;">
+          <a href="https://app.sigmatic-trading.com/get-started" style="background-color: #7497bd; color: white; padding: 12px 24px; text-decoration: none; border-radius: 4px; display: inline-block;">Go to Dashboard</a>
+        </div>
+        <p>If you have any questions or need assistance, please don't hesitate to contact our support team.</p>
+        <p>Best regards,<br/>The Sigmatic Trading Team</p>
+      </div>
+      <div style="text-align: center; padding: 10px; font-size: 12px; color: #666;">
+        <p>This is an automated email, please do not reply.</p>
+      </div>
+    </div>
+  `;
+
+  // Second, send a notification email to the admin
+  const adminSubject = 'New User Registration - Sigmatic Trading';
+  
+  const adminHtml = `
+    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+      <div style="background-color: #7497bd; padding: 20px; text-align: center; color: white;">
+        <h1 style="margin: 0;">New User Registration</h1>
+      </div>
+      <div style="padding: 20px; border: 1px solid #e0e0e0; border-top: none;">
+        <p>Hello Admin,</p>
+        <p>A new user has registered on the Sigmatic Trading platform.</p>
+        <div style="background-color: #f5f5f5; padding: 15px; border-radius: 4px; margin: 20px 0;">
+          <p><strong>Name:</strong> ${userData.name}</p>
+          <p><strong>Email:</strong> ${userData.email}</p>
+          <p><strong>Registration Date:</strong> ${new Date().toLocaleString()}</p>
+        </div>
+        <p>You may want to review this new account and take any necessary actions.</p>
+        <p>Best regards,<br/>Sigmatic Trading System</p>
+      </div>
+    </div>
+  `;
+
+  // Send both emails
+  const userEmailSent = await sendEmail({ to: userData.email, subject: userSubject, html: userHtml });
+  const adminEmailSent = await sendEmail({ to: "essabar.yassine@gmail.com", subject: adminSubject, html: adminHtml });
+  
+  // Return true if both emails were sent successfully
+  return userEmailSent && adminEmailSent;
 }
