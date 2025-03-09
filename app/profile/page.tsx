@@ -1,4 +1,3 @@
-// app/profile/page.tsx
 import { redirect } from "next/navigation"
 import { getCurrentUser } from "@/lib/auth"
 import { AuthForm } from "@/components/auth-form"
