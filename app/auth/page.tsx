@@ -141,10 +141,10 @@ export default function AuthPage() {
                   </div>
                 </div>
                 <div>
-                  <Label htmlFor="phone">Phone Number</Label>
+                  <Label htmlFor="phone">WhatsApp Number</Label>
                   <div className="mt-1 flex rounded-md shadow-sm">
                     <Select value={countryCode} onValueChange={setCountryCode}>
-                      <SelectTrigger className="w-[80px]">
+                      <SelectTrigger className="w-[120px]">
                         <SelectValue placeholder="+1" />
                       </SelectTrigger>
                       <SelectContent>
@@ -152,6 +152,18 @@ export default function AuthPage() {
                         <SelectItem value="+44">🇬🇧 +44</SelectItem>
                         <SelectItem value="+91">🇮🇳 +91</SelectItem>
                         <SelectItem value="+61">🇦🇺 +61</SelectItem>
+                        <SelectItem value="+33">🇫🇷 +33</SelectItem>
+                        <SelectItem value="+49">🇩🇪 +49</SelectItem>
+                        <SelectItem value="+81">🇯🇵 +81</SelectItem>
+                        <SelectItem value="+86">🇨🇳 +86</SelectItem>
+                        <SelectItem value="+34">🇪🇸 +34</SelectItem>
+                        <SelectItem value="+52">🇲🇽 +52</SelectItem>
+                        <SelectItem value="+55">🇧🇷 +55</SelectItem>
+                        <SelectItem value="+82">🇰🇷 +82</SelectItem>
+                        <SelectItem value="+39">🇮🇹 +39</SelectItem>
+                        <SelectItem value="+7">🇷🇺 +7</SelectItem>
+                        <SelectItem value="+65">🇸🇬 +65</SelectItem>
+                        <SelectItem value="+971">🇦🇪 +971</SelectItem>
                       </SelectContent>
                     </Select>
                     <Input
@@ -287,4 +299,3 @@ export default function AuthPage() {
     </div>
   )
 }
-
