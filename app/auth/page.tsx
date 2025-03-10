@@ -1,7 +1,7 @@
 "use client"
 
 import type React from "react"
-import { useState, useEffect } from "react"
+import { useState, useEffect, Suspense } from "react"
 import { Eye, EyeOff, Mail, Lock, User, ArrowRight } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -11,7 +11,7 @@ import { useRouter, useSearchParams } from "next/navigation"
 import Link from "next/link"
 import { useToast } from "@/components/ui/use-toast"
 
-export default function AuthPage() {
+function AuthPageContent() {
   const [isLogin, setIsLogin] = useState(true)
   const [showPassword, setShowPassword] = useState(false)
   const [phoneNumber, setPhoneNumber] = useState("")
@@ -310,9 +310,6 @@ export default function AuthPage() {
 
       {/* Right side - Video Background */}
       <div className="hidden lg:block lg:w-1/2 relative">
-        {/* Logo on right side as well - visible only on large screens */}
-
-        
         <video 
           autoPlay 
           loop 
@@ -334,5 +331,13 @@ export default function AuthPage() {
         </div>
       </div>
     </div>
+  )
+}
+
+export default function AuthPage() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <AuthPageContent />
+    </Suspense>
   )
 }
