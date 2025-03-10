@@ -82,19 +82,19 @@ export function StepTwo({ formData, updateFormData }) {
       >
         <h2 className="text-xl sm:text-2xl font-semibold text-gray-900">Account Verification</h2>
         <p className="text-xs sm:text-sm text-gray-500 mt-1 max-w-md mx-auto">
-          Complete this step to activate your trading account
+           To start trading, please complete verification on the XM Markets website
         </p>
       </motion.div>
       
       {/* Main Verification Section */}
       <motion.div variants={fadeInUp}>
         <Card className="border-0 shadow-sm rounded-md overflow-hidden">
-          <CardHeader className="bg-white border-b border-gray-100 p-3 sm:p-4">
+          {/*<CardHeader className="bg-white border-b border-gray-100 p-3 sm:p-4">
             <CardTitle className="text-base sm:text-lg font-medium text-gray-900">Verification Required</CardTitle>
             <p className="text-xs sm:text-sm text-gray-500 mt-1">
               To start trading, please complete verification on the XM Markets website
             </p>
-          </CardHeader>
+          </CardHeader>*/}
           <CardContent className="p-3 sm:p-4 space-y-3 sm:space-y-4 bg-white">
             <Alert className="bg-blue-50 border-0 shadow-sm rounded-md p-2 sm:p-3">
               <InfoIcon className="h-3 w-3 sm:h-4 sm:w-4 text-blue-600" />

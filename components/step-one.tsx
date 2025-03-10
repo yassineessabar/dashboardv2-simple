@@ -216,12 +216,12 @@ export function StepOne({ formData, updateFormData }) {
           </div>
         </div>
           
-        <div className="bg-gray-50 p-3 sm:p-4 border-t border-gray-200">
+        {/* <div className="bg-gray-50 p-3 sm:p-4 border-t border-gray-200">
           <div className="flex items-center gap-1.5 sm:gap-2">
             <CheckCircle className="h-3 w-3 sm:h-4 sm:w-4 text-[#7497bd]" />
             <span className="text-xs sm:text-sm text-gray-700">Typical registration time: <span className="font-medium">3-5 minutes</span></span>
           </div>
-        </div>
+        </div>*/}
       </motion.div>
 
       {/* Trust Indicators Section */}

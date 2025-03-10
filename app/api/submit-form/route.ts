@@ -1,107 +1,164 @@
-// /app/api/submit-form/route.ts
-import { NextResponse } from 'next/server';
-import nodemailer from 'nodemailer';
+import { NextResponse } from "next/server"
+import nodemailer from "nodemailer"
 
-export async function POST(request: Request) {
+// Create a reusable transporter outside the handler function
+const transporter = nodemailer.createTransport({
+  service: "gmail",
+  auth: {
+    user: "essabar.yassine@gmail.com",
+    pass: "xjmw odfu tzms rtyy",
+  },
+  pool: true,
+  maxConnections: 5
+})
+
+// Maximum file size (3MB)
+const MAX_FILE_SIZE = 3 * 1024 * 1024;
+
+export async function POST(req: Request) {
   try {
-    const { name, email, formData, subject } = await request.json();
-
-    // Generate unique identifiers for this submission
-    const timestamp = new Date().toISOString();
-    const uniqueId = Date.now() + '-' + Math.random().toString(36).substring(2, 10);
-
-    console.log(`Processing form submission with ID: ${uniqueId}`);
+    let data;
+    let isFormData = false;
     
-    // Create transporter for each request - do not reuse
-    const transporter = nodemailer.createTransport({
-      host: "smtp.gmail.com", // Use specific host instead of service
-      port: 465,
-      secure: true, // use SSL
-      auth: {
-        user: "essabar.yassine@gmail.com",
-        pass: "xjmw odfu tzms rtyy",
-      },
-      tls: {
-        rejectUnauthorized: false // Avoid certificate issues
+    // Check if the request is FormData or JSON
+    const contentType = req.headers.get('content-type') || '';
+    
+    if (contentType.includes('multipart/form-data')) {
+      // Parse the FormData
+      const formData = await req.formData();
+      isFormData = true;
+      
+      // Convert FormData to a regular object
+      data = {};
+      for (const [key, value] of formData.entries()) {
+        data[key] = value;
       }
-    });
-
-    // Create a formatted HTML for the admin notification email
-    const adminHtml = `
-      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-        <div style="background-color: #7497bd; padding: 20px; text-align: center; color: white;">
-          <h1 style="margin: 0;">New Form Submission - ID: ${uniqueId}</h1>
-        </div>
-        <div style="padding: 20px; border: 1px solid #e0e0e0; border-top: none;">
-          <p>Hello Admin,</p>
-          <p>A new form has been submitted on the Sigmatic Trading platform.</p>
-          <div style="background-color: #f5f5f5; padding: 15px; border-radius: 4px; margin: 20px 0;">
-            <p><strong>Submission ID:</strong> ${uniqueId}</p>
-            <p><strong>Name:</strong> ${name || 'Not provided'}</p>
-            <p><strong>Setup Choice:</strong> ${formData.setupChoice}</p>
-            <p><strong>Selected Robot:</strong> ${formData.selectedRobot}</p>
-            <p><strong>Verification Status:</strong> ${formData.verificationComplete ? 'Complete' : 'Incomplete'}</p>
-            <p><strong>Deposit Status:</strong> ${formData.depositVerified ? 'Verified' : 'Not Verified'}</p>
-            <p><strong>Submission Time:</strong> ${new Date().toLocaleString()}</p>
-          </div>
-          
-          <h3 style="margin-top: 20px;">Complete Form Data:</h3>
-          <pre style="background-color: #f5f5f5; padding: 15px; border-radius: 4px; white-space: pre-wrap; font-size: 12px;">
-${JSON.stringify(formData, null, 2)}
-          </pre>
-          
-          <p>You may want to review this submission and take any necessary actions.</p>
-          <p>Best regards,<br/>Sigmatic Trading System</p>
-        </div>
-      </div>
-    `;
-
-    // Create a completely unique subject line for each submission
-    const uniqueSubject = `New FORM Registration - ${uniqueId}`;
-
-    console.log(`Attempting to send email to essabar.yassine@gmail.com with subject "${uniqueSubject}"`);
-
-    // Send email
-    const mailOptions = {
-      from: {
-        name: 'Sigmatic Trading',
-        address: 'essabar.yassine@gmail.com'
-      },
-      to: 'essabar.yassine@gmail.com', // Always send to this address
-      subject: uniqueSubject,
-      html: adminHtml,
-      headers: {
-        'X-Entity-Ref-ID': uniqueId,
-        'Message-ID': `<${uniqueId}@sigmatic-trading.com>`,
-        'X-Priority': '1'
-      }
-    };
-
-    // Send the email and wait for the result
-    const info = await transporter.sendMail(mailOptions);
+    } else {
+      // Parse JSON request
+      data = await req.json();
+    }
     
-    console.log(`Email sent successfully! Message ID: ${info.messageId}`);
+    // First, immediately return a success response to the client
+    // This prevents timeouts from the client perspective
+    const responsePromise = NextResponse.json({ 
+      message: "Form received. Processing in background." 
+    }, { status: 200 });
     
-    // Close the transporter connection
-    await transporter.close();
-
-    return NextResponse.json({ 
-      success: true, 
-      message: 'Form submitted successfully',
-      emailId: info.messageId,
-      submissionId: uniqueId
-    });
+    // Continue processing in the background
+    processingInBackground(data, isFormData);
+    
+    // Return the success response immediately
+    return responsePromise;
+    
   } catch (error) {
-    // Detailed error logging
-    console.error('Failed to send email:', error);
+    console.error("Error processing form:", error);
+    return NextResponse.json({ 
+      message: "Error processing form. Please try again." 
+    }, { status: 500 });
+  }
+}
+
+// Separate function to handle the processing in the background
+async function processingInBackground(data, isFormData) {
+  try {
+    let fullName, email, phoneNumber, setupChoice, selectedRobot, 
+        submissionId, submissionTime, verificationStatus, depositStatus;
     
-    return NextResponse.json(
-      { 
-        success: false, 
-        message: 'Error submitting form',
-        error: error instanceof Error ? error.message : String(error)
-      },
-      { status: 500 }
-    );
+    // Extract form fields based on request type
+    if (isFormData) {
+      // FormData format
+      fullName = data.fullName;
+      email = data.email;
+      phoneNumber = data.phoneNumber || "Not provided";
+      setupChoice = data.setupChoice;
+      selectedRobot = data.selectedRobot;
+      submissionId = data.submissionId || `${Date.now()}-${Math.random().toString(36).substring(2, 8)}`;
+      submissionTime = data.submissionTime || new Date().toLocaleString('en-GB');
+      verificationStatus = "Incomplete";
+      depositStatus = "Not Verified";
+    } else {
+      // JSON format
+      fullName = data.name;
+      email = data.email;
+      phoneNumber = data.phoneNumber || "Not provided";
+      setupChoice = data.formData?.setupChoice;
+      selectedRobot = data.formData?.selectedRobot;
+      submissionId = data.submissionId || `${Date.now()}-${Math.random().toString(36).substring(2, 8)}`;
+      submissionTime = data.submissionTime || new Date().toLocaleString('en-GB');
+      verificationStatus = data.verificationStatus || "Incomplete";
+      depositStatus = data.depositStatus || "Not Verified";
+    }
+    
+    // Setup email options without attachments first
+    const mailOptions = {
+      from: "essabar.yassine@gmail.com",
+      to: "essabar.yassine@gmail.com",
+      subject: "New Real Account Submission",
+      html: `
+<div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e0e0e0; border-radius: 5px;">
+  <h2 style="color: #333; border-bottom: 1px solid #eee; padding-bottom: 10px;">New Account Registration</h2>
+  
+  <div style="margin: 20px 0; padding: 15px; background-color: #f5f5f5; border-radius: 4px;">
+    <p style="margin: 5px 0;"><strong>Submission ID:</strong> ${submissionId}</p>
+    <p style="margin: 5px 0;"><strong>Name:</strong> ${fullName}</p>
+    <p style="margin: 5px 0;"><strong>Email:</strong> ${email}</p>
+    <p style="margin: 5px 0;"><strong>Phone Number:</strong> ${phoneNumber}</p>
+    <p style="margin: 5px 0;"><strong>Setup Choice:</strong> ${setupChoice}</p>
+    <p style="margin: 5px 0;"><strong>Selected Robot:</strong> ${selectedRobot}</p>
+    <p style="margin: 5px 0;"><strong>Verification Status:</strong> ${verificationStatus}</p>
+    <p style="margin: 5px 0;"><strong>Deposit Status:</strong> ${depositStatus}</p>
+    <p style="margin: 5px 0;"><strong>Submission Time:</strong> ${submissionTime}</p>
+  </div>
+  
+  <p style="color: #666; font-size: 14px; margin-top: 30px;">This is an automated message. Please do not reply to this email.</p>
+</div>
+      `,
+      attachments: []
+    }
+    
+    // Try to process attachments with size limiting if FormData
+    if (isFormData) {
+      try {
+        const identityDocument = data.identityDocument;
+        if (identityDocument && identityDocument.size < MAX_FILE_SIZE) {
+          const buffer = Buffer.from(await identityDocument.arrayBuffer())
+          mailOptions.attachments.push({
+            filename: identityDocument.name || 'identity_document.pdf',
+            content: buffer,
+            encoding: 'base64'
+          })
+        }
+      } catch (err) {
+        console.error("Error with identity document:", err)
+        // Continue anyway
+      }
+      
+      try {
+        const proofOfAddress = data.proofOfAddress;
+        if (proofOfAddress && proofOfAddress.size < MAX_FILE_SIZE) {
+          const buffer = Buffer.from(await proofOfAddress.arrayBuffer())
+          mailOptions.attachments.push({
+            filename: proofOfAddress.name || 'proof_of_address.pdf',
+            content: buffer,
+            encoding: 'base64'
+          })
+        }
+      } catch (err) {
+        console.error("Error with proof of address:", err)
+        // Continue anyway
+      }
+    }
+    
+    // Send the email, but don't wait for it
+    transporter.sendMail(mailOptions)
+      .then(info => {
+        console.log("Email sent successfully:", info.messageId)
+      })
+      .catch(err => {
+        console.error("Failed to send email:", err)
+      });
+      
+  } catch (error) {
+    console.error("Background processing error:", error)
   }
 }

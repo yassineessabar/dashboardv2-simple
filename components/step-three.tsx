@@ -119,19 +119,19 @@ export function StepThree({ formData, updateFormData }) {
       >
         <h2 className="text-xl sm:text-2xl font-semibold text-gray-900">Fund Your Trading Account</h2>
         <p className="text-xs sm:text-sm text-gray-500 mt-1 max-w-md mx-auto">
-          Deposit a minimum of $650 to start trading with real funds
+          Deposit a minimum of $650 to access our AI trading strategies with real funds
         </p>
       </motion.div>
       
       {/* Main Deposit Card */}
       <motion.div variants={fadeInUp}>
         <Card className="border-0 shadow-sm rounded-md overflow-hidden">
-          <CardHeader className="bg-white border-b border-gray-100 p-3 sm:p-4">
+       {/*    <CardHeader className="bg-white border-b border-gray-100 p-3 sm:p-4">
             <CardTitle className="text-base sm:text-lg font-medium text-gray-900">Start Trading</CardTitle>
             <p className="text-xs sm:text-sm text-gray-500 mt-1">
               Fund your account to access our AI trading strategies
             </p>
-          </CardHeader>
+          </CardHeader>*/}
           <CardContent className="p-3 sm:p-4 space-y-3 sm:space-y-4 bg-white">
             <div className="space-y-3">
               <Alert className="bg-blue-50 border-0 shadow-sm rounded-md p-2 sm:p-3">

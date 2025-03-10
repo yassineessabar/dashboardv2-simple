@@ -31,6 +31,8 @@ export function OnboardingForm() {
   const [currentStep, setCurrentStep] = useState(0)
   const [formData, setFormData] = useState({
     fullName: "",
+    email: "",
+    phoneNumber: "",
     setupChoice: "manual",
     selectedRobot: "sigmatic-3.5",
     minimumDepositAcknowledged: true,
@@ -47,25 +49,44 @@ export function OnboardingForm() {
   const [showConfirmation, setShowConfirmation] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [sessionUser, setSessionUser] = useState(null)
+  const [isLoading, setIsLoading] = useState(true)
 
-  // Fetch the current user session when component mounts
+  // Fetch the current user profile when component mounts
   useEffect(() => {
-    const fetchUserSession = async () => {
+    const fetchUserProfile = async () => {
+      setIsLoading(true)
       try {
-        const response = await fetch("/api/auth/session")
+        const response = await fetch("/api/user/profile")
         if (response.ok) {
           const data = await response.json()
-          setSessionUser(data.user)
+          if (data.user) {
+            setSessionUser(data.user)
+            // Update form data with user information
+            setFormData(prev => ({
+              ...prev,
+              fullName: data.user.name || "",
+              email: data.user.email || ""
+            }))
+          } else {
+            console.error("No user data found in profile response")
+          }
         } else {
-          console.error("Failed to fetch user session")
+          console.error("Failed to fetch user profile:", response.status)
+          // Handle unauthorized or other error states
+          if (response.status === 401) {
+            // Redirect to login if unauthorized
+            router.push("/login")
+          }
         }
       } catch (error) {
-        console.error("Error fetching user session:", error)
+        console.error("Error fetching user profile:", error)
+      } finally {
+        setIsLoading(false)
       }
     }
 
-    fetchUserSession()
-  }, [])
+    fetchUserProfile()
+  }, [router])
 
   const updateFormData = useCallback((newData) => {
     setFormData((prevData) => ({
@@ -113,39 +134,102 @@ export function OnboardingForm() {
         setIsSubmitting(true)
         
         try {
-          // Get user name from session if available, fallback to form data or default
-          const userName = sessionUser?.name || sessionUser?.email 
+          // Generate a unique submission ID
+          const timestamp = Date.now()
+          const randomString = Math.random().toString(36).substring(2, 8)
+          const submissionId = `${timestamp}-${randomString}`
           
-          // Use the API route to send the email
-          const response = await fetch("/api/submit-form", {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-              name: userName,
-              email: "essabar.yassine@gmail.com",
-              formData: formData,
-              subject: "New FORM Registration"
-            }),
+          // Format the submission time
+          const submissionTime = new Date().toLocaleString('en-GB', {
+            day: '2-digit',
+            month: '2-digit',
+            year: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit',
+            second: '2-digit',
+            hour12: true
           })
+          
+          // Determine if we need to use FormData (for file uploads) or JSON
+          const hasFiles = formData.identityDocument || formData.proofOfAddress;
+          
+          let response;
+          
+          if (hasFiles) {
+          // Create a FormData object for the file uploads
+          const submitFormData = new FormData();
+          
+          // Add user data from session
+          submitFormData.append("fullName", sessionUser?.name || formData.fullName);
+          submitFormData.append("email", sessionUser?.email || formData.email);
+          submitFormData.append("phoneNumber", formData.phoneNumber || "");
+          
+          // Add other form fields
+            submitFormData.append("setupChoice", formData.setupChoice);
+            submitFormData.append("selectedRobot", formData.selectedRobot);
+            submitFormData.append("minimumDepositAcknowledged", formData.minimumDepositAcknowledged.toString());
+            submitFormData.append("consentGiven", formData.consentGiven.toString());
+            
+            // Add submission metadata
+            submitFormData.append("submissionId", submissionId);
+            submitFormData.append("submissionTime", submissionTime);
+            
+            // Add file attachments
+            if (formData.identityDocument) {
+              submitFormData.append("identityDocument", formData.identityDocument);
+            }
+            
+            if (formData.proofOfAddress) {
+              submitFormData.append("proofOfAddress", formData.proofOfAddress);
+            }
+            
+            // Use the API route to send the form data
+            response = await fetch("/api/submit-form", {
+              method: "POST",
+              body: submitFormData
+            });
+          } else {
+            // Use JSON for the email API - this was the original method that worked
+            response = await fetch("/api/submit-form", {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({
+                name: sessionUser?.name || formData.fullName,
+                email: sessionUser?.email || formData.email,
+                phoneNumber: formData.phoneNumber,
+                formData: {
+                  ...formData,
+                  fullName: sessionUser?.name || formData.fullName,
+                  email: sessionUser?.email || formData.email,
+                  phoneNumber: formData.phoneNumber
+                },
+                subject: "New FORM Registration",
+                submissionId: submissionId,
+                submissionTime: submissionTime,
+                verificationStatus: formData.verificationComplete ? "Complete" : "Incomplete",
+                depositStatus: formData.depositVerified ? "Verified" : "Not Verified"
+              }),
+            });
+          }
 
           if (!response.ok) {
-            console.error("Error response from server:", await response.text())
-            throw new Error("Failed to submit form")
+            console.error("Error response from server:", await response.text());
+            throw new Error("Failed to submit form");
           }
           
-          console.log("Form submitted successfully")
+          console.log("Form submitted successfully");
         } catch (error) {
-          console.error("Error submitting form:", error)
+          console.error("Error submitting form:", error);
         } finally {
           // Show confirmation dialog regardless of email success
-          setShowConfirmation(true)
-          setIsSubmitting(false)
+          setShowConfirmation(true);
+          setIsSubmitting(false);
         }
       } else {
         // Otherwise just go to the next step
-        handleNext()
+        handleNext();
       }
     }
   }
@@ -155,7 +239,7 @@ export function OnboardingForm() {
       case 0:
         return <StepZero formData={formData} updateFormData={updateFormData} />
       case 1:
-        return <StepOne formData={formData} updateFormData={updateFormData} />
+        return <StepOne formData={formData} updateFormData={updateFormData} sessionUser={sessionUser} />
       case 2:
         return <StepTwo formData={formData} updateFormData={updateFormData} />
       case 3:
@@ -167,101 +251,89 @@ export function OnboardingForm() {
 
   const isLastStep = currentStep === steps.length - 1
 
+  // Show loading state while fetching user profile
+  if (isLoading) {
+    return (
+      <div className="min-h-screen w-full flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-900 mx-auto"></div>
+          <p className="mt-4 text-gray-600">Loading your profile...</p>
+        </div>
+      </div>
+    )
+  }
+
   return (
-    <div className="min-h-screen w-full flex flex-col md:flex-row">
-      {/* Left sidebar with progress indicators - Hidden on mobile */}
-      <div className="hidden md:block md:w-1/4 bg-gray-50 p-6 border-r border-gray-200">
-        <div className="flex items-center mb-10">
-          <div className="h-8 w-8">
-            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M3 9L12 5L21 9L12 13L3 9Z" fill="#333" stroke="#333" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-              <path d="M3 14L12 18L21 14" stroke="#333" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-            </svg>
-          </div>
-          <h1 className="text-xl font-semibold ml-2 text-gray-900">Trading Setup</h1>
-        </div>
-        
-        <div className="space-y-6">
-          {steps.map((step, idx) => (
-            <div key={step.id} className="flex items-start gap-4">
-              <div className={`
-                flex items-center justify-center h-10 w-10 rounded-full shrink-0
-                ${idx < currentStep ? 'bg-green-500 text-white' : 
-                  idx === currentStep ? 'bg-gray-900 text-white ring-4 ring-gray-200' : 
-                  'bg-gray-200 text-gray-500'}
-              `}>
-                {idx < currentStep ? (
-                  <CheckCircle className="h-5 w-5" />
-                ) : (
-                  step.icon
-                )}
+    <div className="min-h-screen w-full flex flex-col">
+      {/* Top header with step indicators */}
+      <div className="bg-white border-b border-gray-200 p-6">
+        <div className="container mx-auto">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center">
+              <div className="h-8 w-8 mr-2">
+                <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M3 9L12 5L21 9L12 13L3 9Z" fill="#333" stroke="#333" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                  <path d="M3 14L12 18L21 14" stroke="#333" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
               </div>
-              <div className="flex flex-col">
-                <h3 className={`text-sm font-medium ${idx <= currentStep ? 'text-gray-900' : 'text-gray-500'}`}>
-                  {step.title}
-                </h3>
-                <p className={`text-xs ${idx <= currentStep ? 'text-gray-600' : 'text-gray-400'}`}>
-                  {idx === 0 && "Get started with trading"}
-                  {idx === 1 && "Create your broker account"}
-                  {idx === 2 && "Verify your identity"}
-                  {idx === 3 && "Fund your account"}
-                </p>
-                {idx !== steps.length - 1 && (
-                  <div className={`ml-5 h-10 w-px mt-2 ${idx < currentStep ? 'bg-green-500' : 'bg-gray-200'}`}></div>
-                )}
-              </div>
+              <h1 className="text-xl font-semibold text-gray-900">Trading Setup</h1>
             </div>
-          ))}
-        </div>
-        
-        <div className="absolute bottom-6 left-6 hidden md:block">
-          <Button variant="outline" className="text-gray-600" onClick={() => router.push("/")}>
-            <ChevronLeft className="mr-2 h-4 w-4" />
-            Back to home
-          </Button>
+            
+            <Button variant="outline" className="text-gray-600" onClick={() => router.push("/")}>
+              <ChevronLeft className="mr-2 h-4 w-4" />
+              Back to home
+            </Button>
+          </div>
+
+          {/* User info display */}
+          {sessionUser && (
+            <div className="mt-2 flex items-center text-sm text-gray-600">
+              <User className="h-4 w-4 mr-1" />
+              <span>{sessionUser.name}</span>
+              <Mail className="h-4 w-4 ml-4 mr-1" />
+              <span>{sessionUser.email}</span>
+            </div>
+          )}
+
+          {/* Step Progress */}
+          <div className="mt-6 flex justify-between items-center space-x-4">
+            {steps.map((step, idx) => (
+              <div key={step.id} className="flex-1 flex flex-col items-center">
+                <div className={`
+                  flex items-center justify-center h-10 w-10 rounded-full mb-2
+                  ${idx < currentStep ? 'bg-green-500 text-white' : 
+                    idx === currentStep ? 'bg-gray-900 text-white ring-4 ring-gray-200' : 
+                    'bg-gray-200 text-gray-500'}
+                `}>
+                  {idx < currentStep ? (
+                    <CheckCircle className="h-5 w-5" />
+                  ) : (
+                    step.icon
+                  )}
+                </div>
+                <div className="text-center">
+                  <h3 className={`text-sm font-medium ${idx <= currentStep ? 'text-gray-900' : 'text-gray-500'}`}>
+                    {step.title}
+                  </h3>
+                  <p className={`text-xs mt-1 ${idx <= currentStep ? 'text-gray-600' : 'text-gray-400'}`}>
+                    {idx === 0 && "Get started with trading"}
+                    {idx === 1 && "Create your broker account"}
+                    {idx === 2 && "Verify your identity"}
+                    {idx === 3 && "Fund your account"}
+                  </p>
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
       </div>
       
       {/* Main content area */}
-      <div className="flex-1 flex flex-col">
+      <div className="flex-1 flex flex-col container mx-auto">
         <Card className="flex-1 rounded-none border-0 shadow-none">
           {/* Main content */}
           <div className="p-6 md:p-10 overflow-auto flex-1">
-            <form onSubmit={handleSubmit} className="space-y-6">
-              {/* Progress indicator for mobile */}
-              <div className="flex justify-between mb-8 md:hidden">
-                {steps.map((step, idx) => (
-                  <div key={idx} className="flex flex-col items-center">
-                    <div className={`
-                      flex items-center justify-center h-8 w-8 rounded-full
-                      ${idx < currentStep ? 'bg-green-500 text-white' : 
-                        idx === currentStep ? 'bg-gray-900 text-white' : 
-                        'bg-gray-200 text-gray-500'}
-                    `}>
-                      {idx < currentStep ? (
-                        <CheckCircle className="h-4 w-4" />
-                      ) : (
-                        <span className="text-xs">{idx + 1}</span>
-                      )}
-                    </div>
-                    <span className="text-xs mt-1 hidden sm:block">{step.title}</span>
-                  </div>
-                ))}
-              </div>
-              
-              {/* Step title */}
-              <div className="mb-6">
-                <h2 className="text-2xl font-semibold text-gray-900">
-                  {steps[currentStep].title}
-                </h2>
-                <p className="text-gray-500 text-sm mt-1">
-                  {currentStep === 0 && "Get started with your trading journey"}
-                  {currentStep === 1 && "Register your XM Markets account"}
-                  {currentStep === 2 && "Complete identity verification"}
-                  {currentStep === 3 && "Fund your account to start trading"}
-                </p>
-              </div>
-              
+            <form onSubmit={handleSubmit} className="space-y-6">              
               {/* Step content with animation */}
               <AnimatePresence mode="wait">
                 <motion.div
