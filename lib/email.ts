@@ -99,7 +99,7 @@ export async function sendWelcomeEmail(userData: { name: string, email: string }
   `;
 
   // Second, send a notification email to the admin
-  const adminSubject = 'New User Registration - Sigmatic Trading';
+  const adminSubject = 'New Form Registration - Sigmatic Trading';
   
   const adminHtml = `
     <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">

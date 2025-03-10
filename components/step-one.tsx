@@ -1,34 +1,51 @@
 "use client"
 
-import { motion } from "framer-motion"
-import { Card, CardContent } from "@/components/ui/card"
+import { useState } from "react"
+import { motion, AnimatePresence } from "framer-motion"
 import { Button } from "@/components/ui/button"
-import { Globe, ShieldCheck, Zap, CheckCircle, AlertTriangle, Copy, ExternalLink, Mail, Play } from "lucide-react"
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
+import { 
+  Globe, 
+  ShieldCheck, 
+  Zap, 
+  CheckCircle, 
+  AlertTriangle, 
+  Copy, 
+  ExternalLink, 
+  Mail,
+  ChevronDown
+} from "lucide-react"
+import { Alert, AlertDescription } from "@/components/ui/alert"
 import Image from "next/image"
 import { useToast } from "@/components/ui/use-toast"
 import { VideoInstructionBubble } from "./video-instruction-bubble"
+import { WhatsAppContactBubble } from "./whatsapp-contact-bubble"
 
 export function StepOne({ formData, updateFormData }) {
   const { toast } = useToast()
   const partnerCode = "D2XQQ"
+  const [copied, setCopied] = useState(false)
+  const [expandedFeatures, setExpandedFeatures] = useState({})
+  
+  // Use local state for trust indicators section instead of formData
+  const [showTrustIndicators, setShowTrustIndicators] = useState(false)
 
   // Video instruction source
   const videoInstruction = {
     title: "How to Register with XM Markets",
-    videoSrc: "https://www.youtube.com/embed/your-registration-video-id" // Replace with your actual YouTube video ID
+    videoSrc: "https://www.youtube.com/embed/your-registration-video-id"
   }
 
   const handleCopyPartnerCode = (e) => {
-    // Prevent the event from propagating
     e.preventDefault()
     e.stopPropagation()
     
     navigator.clipboard.writeText(partnerCode)
+    setCopied(true)
+    setTimeout(() => setCopied(false), 2000)
+    
     toast({
       description: "Partner code copied to clipboard",
+      className: "bg-gray-100 border-gray-200 text-gray-800"
     })
   }
 
@@ -36,168 +53,254 @@ export function StepOne({ formData, updateFormData }) {
     window.open("https://www.xmglobal.com/register/profile-account", "_blank")
   }
 
-  const fadeInUp = {
-    initial: { opacity: 0, y: 20 },
-    animate: { opacity: 1, y: 0 },
-    transition: { duration: 0.5 },
+  const toggleFeature = (featureId) => {
+    setExpandedFeatures(prev => ({
+      ...prev,
+      [featureId]: !prev[featureId]
+    }))
   }
 
+  const features = [
+    { 
+      id: "global",
+      icon: Globe, 
+      title: "Global Trading Platform", 
+      description: "Trade in 196+ countries with multi-language support and 24/7 service",
+    },
+    { 
+      id: "secure",
+      icon: ShieldCheck, 
+      title: "Secure & Regulated", 
+      description: "Protected by SSL encryption and compliant with international regulations",
+    },
+    { 
+      id: "execution",
+      icon: Zap, 
+      title: "Ultra-Fast Execution", 
+      description: "99.35% of orders executed in under 1 second with no requotes",
+    },
+    { 
+      id: "benefits",
+      icon: CheckCircle, 
+      title: "Exclusive Benefits", 
+      description: "Access Sigmatic's AI trading algorithms with our partner code",
+    },
+  ]
+
   return (
-    <motion.div className="max-w-3xl mx-auto space-y-8 py-6" initial="initial" animate="animate" variants={fadeInUp}>
-      {/* Video instruction bubble */}
-      <VideoInstructionBubble 
+    <div className="w-full mx-auto space-y-4 sm:space-y-6">
+      {/* Floating helpers */}
+      {/* <VideoInstructionBubble 
         title={videoInstruction.title}
         videoSrc={videoInstruction.videoSrc}
         position="bottom-right"
-      />
+      />*/}
       
-      <div className="text-center space-y-3 mb-8">
-        <h2 className="text-3xl font-bold text-[#7497bd] tracking-tight">Broker Registration</h2>
-        <p className="text-lg text-gray-600 max-w-xl mx-auto">
-          Follow these simple steps to set up your XM Markets trading account
-        </p>
-      </div>
+      <WhatsAppContactBubble 
+        phoneNumber="447700000000" 
+        message="Hi, I need help with registering my XM Markets account. My partner code is D2XQQ." 
+        position="bottom-right" 
+      />
 
-      <Card className="shadow-xl border-0 overflow-hidden">
-        <CardContent className="p-8 space-y-8">
-          {/* Step 1: Visit XM Market website */}
-          <div className="space-y-4">
-            <div className="flex items-center gap-3">
-              <div className="flex items-center justify-center w-8 h-8 rounded-full bg-[#7497bd] text-white font-bold">
+      {/* Registration Steps Card */}
+      <motion.div 
+        className="bg-white rounded-lg sm:rounded-xl shadow-md border border-gray-200 overflow-hidden"
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.4 }}
+      >
+        <div className="divide-y divide-gray-200">
+          {/* Step 1: Visit Website */}
+          <div className="p-4 sm:p-6">
+            <div className="flex gap-2 sm:gap-5">
+              <div className="flex items-center justify-center w-6 h-6 sm:w-7 sm:h-7 rounded-full bg-[#7497bd] text-white font-medium text-xs shrink-0 mt-1">
                 1
               </div>
-              <h3 className="text-xl font-semibold text-[#7497bd]">Visit XM Market website</h3>
-            </div>
-            <p className="text-gray-700 ml-11">
-              Click the button below to open the XM Markets registration page in a new tab.
-            </p>
-            <div className="ml-11">
-              <Button
-                onClick={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  handleRegister();
-                }}
-                className="bg-[#7497bd] hover:bg-[#5a7a9d] text-white font-bold py-3 px-6 rounded-lg text-lg transition-all duration-300 flex items-center gap-2 shake-animation attention-button"
-              >
-                Register with XM Markets
-                <ExternalLink className="h-5 w-5" />
-              </Button>
-            </div>
-          </div>
-
-          {/* Step 2: Fill in Your Information */}
-          <div className="space-y-4">
-            <div className="flex items-center gap-3">
-              <div className="flex items-center justify-center w-8 h-8 rounded-full bg-[#7497bd] text-white font-bold">
-                2
-              </div>
-              <h3 className="text-xl font-semibold text-[#7497bd]">Fill in Your Information</h3>
-            </div>
-            <p className="text-gray-700 ml-11">
-              Complete the registration form with your personal details. Make sure to enter the partner code in the
-              designated field.
-            </p>
-
-            <div className="ml-11 bg-gray-50 rounded-lg p-6 border border-gray-200">
-              <div className="mb-4">
-                <Label htmlFor="partnerCode" className="text-gray-700 font-medium">
-                  Partner Code (Important)
-                </Label>
-                <div className="mt-2 flex items-center gap-2">
-                  <Input id="partnerCode" value={partnerCode} readOnly className="bg-white font-mono text-[#7497bd]" />
+              <div className="space-y-2 sm:space-y-3 w-full">
+                <h3 className="text-base sm:text-lg font-medium text-gray-900">Visit XM Markets Website</h3>
+                <p className="text-xs sm:text-sm text-gray-600">
+                  Click the button below to open the official XM Markets registration page in a new tab.
+                </p>
+                <div>
                   <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={(e) => handleCopyPartnerCode(e)}
-                    className="flex items-center gap-1"
+                    onClick={handleRegister}
+                    className="bg-[#7497bd] hover:bg-[#5a7a9d] text-white px-3 sm:px-5 py-1.5 sm:py-2 rounded-md text-xs sm:text-sm flex items-center gap-1.5 sm:gap-2 transition-colors"
                   >
-                    <Copy className="h-4 w-4" />
-                    Copy
+                    Open Registration Page
+                    <ExternalLink className="h-3 w-3 sm:h-4 sm:w-4" />
                   </Button>
                 </div>
-                <p className="text-sm text-gray-500 mt-1">
-                  This code must be entered in the "Partner Code" field during registration
-                </p>
               </div>
-
-              <Image
-                src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/Screen%20Shot%202025-03-10%20at%206.59.26%20am-0J2S79XFpPsRN6CEYTjTdyBVFr1o5L.png"
-                alt="XM Markets Registration Form"
-                width={500}
-                height={600}
-                className="rounded-lg border border-gray-200 shadow-md mx-auto"
-              />
             </div>
           </div>
-
-          {/* Step 3: Confirm Your Email */}
-          <div className="space-y-4">
-            <div className="flex items-center gap-3">
-              <div className="flex items-center justify-center w-8 h-8 rounded-full bg-[#7497bd] text-white font-bold">
+            
+          {/* Step 2: Copy Partner Code */}
+          <div className="p-4 sm:p-6 bg-gray-50">
+            <div className="flex gap-2 sm:gap-5">
+              <div className="flex items-center justify-center w-6 h-6 sm:w-7 sm:h-7 rounded-full bg-[#7497bd] text-white font-medium text-xs shrink-0 mt-1">
+                2
+              </div>
+              <div className="space-y-3 sm:space-y-4 w-full">
+                <div>
+                  <h3 className="text-base sm:text-lg font-medium text-gray-900">Use Our Partner Code</h3>
+                  <p className="text-xs sm:text-sm text-gray-600 mt-1">
+                    Copy this code and enter it in the "Partner Code" field during registration.
+                  </p>
+                </div>
+                  
+                <div className="flex items-center gap-2 bg-white p-2 sm:p-3 pl-3 sm:pl-5 pr-2 sm:pr-3 rounded-md border border-gray-200 w-full sm:w-auto max-w-xs shadow-sm">
+                  <span className="font-mono text-sm sm:text-base font-medium text-gray-900">{partnerCode}</span>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={handleCopyPartnerCode}
+                    className={`ml-auto ${copied ? 'text-green-600' : 'text-gray-400 hover:text-gray-600'}`}
+                  >
+                    {copied ? (
+                      <CheckCircle className="h-3 w-3 sm:h-4 sm:w-4" />
+                    ) : (
+                      <Copy className="h-3 w-3 sm:h-4 sm:w-4" />
+                    )}
+                  </Button>
+                </div>
+                  
+                <Alert className="bg-gray-100 border-0 text-gray-800 p-2.5 sm:p-4 rounded-md sm:rounded-lg shadow-sm">
+                  <AlertTriangle className="h-3 w-3 sm:h-4 sm:w-4 text-[#7497bd] mt-0.5" />
+                  <AlertDescription className="text-xs sm:text-sm ml-2">
+                    You must enter the partner code to link your account with Sigmatic Trading.
+                  </AlertDescription>
+                </Alert>
+                  
+                <div className="flex justify-center mt-3 sm:mt-4">
+                  <div className="relative max-w-[220px] sm:max-w-xs transition-transform hover:scale-102 duration-300">
+                    <div className="absolute -top-2 -right-2 bg-[#7497bd] text-white text-[10px] sm:text-xs font-medium px-1.5 sm:px-2 py-0.5 rounded-full shadow-sm z-10">
+                      Example
+                    </div>
+                    <div className="border border-gray-300 rounded-lg bg-white shadow-md overflow-hidden">
+                      <Image
+                        src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/Screen%20Shot%202025-03-10%20at%206.59.26%20am-0J2S79XFpPsRN6CEYTjTdyBVFr1o5L.png"
+                        alt="XM Markets Registration Form"
+                        width={280}
+                        height={340}
+                        className="rounded"
+                      />
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+            
+          {/* Step 3: Email Verification */}
+          <div className="p-4 sm:p-6">
+            <div className="flex gap-2 sm:gap-5">
+              <div className="flex items-center justify-center w-6 h-6 sm:w-7 sm:h-7 rounded-full bg-[#7497bd] text-white font-medium text-xs shrink-0 mt-1">
                 3
               </div>
-              <h3 className="text-xl font-semibold text-[#7497bd]">Confirm Your Email</h3>
+              <div className="space-y-3 sm:space-y-4 w-full">
+                <h3 className="text-base sm:text-lg font-medium text-gray-900">Confirm Your Email</h3>
+                <p className="text-xs sm:text-sm text-gray-600">
+                  After submitting the registration form, XM Markets will send you a confirmation email. Click the verification link to activate your account.
+                </p>
+                <div className="bg-gray-100 rounded-md sm:rounded-lg p-3 sm:p-4 flex gap-2 sm:gap-3 shadow-sm">
+                  <Mail className="h-4 w-4 sm:h-5 sm:w-5 text-[#7497bd] shrink-0 mt-0.5" />
+                  <div>
+                    <p className="text-xs sm:text-sm font-medium text-gray-900">Check All Email Folders</p>
+                    <p className="text-[10px] sm:text-xs text-gray-600 mt-1">
+                      If you don't see the confirmation email in your inbox, check your spam, promotions, or junk folders.
+                    </p>
+                  </div>
+                </div>
+              </div>
             </div>
-            <p className="text-gray-700 ml-11">
-              After registration, XM Markets will send a confirmation email to your inbox. Click the verification link
-              to activate your account.
-            </p>
-            <Alert className="ml-11 bg-blue-50 border-blue-200">
-              <Mail className="h-4 w-4 text-blue-600" />
-              <AlertTitle className="text-blue-800">Check Your Inbox</AlertTitle>
-              <AlertDescription className="text-blue-700">
-                If you don't see the confirmation email, check your spam or junk folder. The email verification is
-                required to complete your registration.
-              </AlertDescription>
-            </Alert>
           </div>
-        </CardContent>
-      </Card>
-
-      <Alert variant="warning" className="bg-yellow-50 border-yellow-200">
-        <AlertTriangle className="h-4 w-4 text-yellow-600" />
-        <AlertDescription className="text-yellow-800">
-          <strong>Important:</strong> Make sure to enter the partner code {partnerCode} during registration to link your
-          account with Sigmatic Trading.
-        </AlertDescription>
-      </Alert>
-
-      <motion.div
-        className="bg-gradient-to-r from-[#7497bd] to-[#5a7a9d] rounded-xl overflow-hidden shadow-xl"
-        variants={fadeInUp}
-      >
-        <div className="p-8 flex flex-col sm:flex-row justify-between items-center">
-          <h3 className="text-3xl font-bold text-white mb-4 sm:mb-0">Why Choose XM Markets?</h3>
-          <Image
-            src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/image-Df6oWaVYWM8Qm88wys1zvoGCJrb7WX.png"
-            alt="XM Markets Logo"
-            width={150}
-            height={50}
-            className="object-contain"
-          />
         </div>
-        <div className="bg-white p-8 grid sm:grid-cols-2 gap-6">
-          {[
-            { icon: Globe, title: "Global Reach", description: "Access markets worldwide" },
-            { icon: ShieldCheck, title: "Secure Platform", description: "Advanced security measures" },
-            { icon: Zap, title: "Fast Execution", description: "Lightning-fast trade execution" },
-            { icon: CheckCircle, title: "Legally Regulated", description: "Compliant with financial regulations" },
-          ].map((feature, index) => (
-            <motion.div
-              key={index}
-              className="flex items-start space-x-4 p-4 rounded-lg bg-gray-50 transition-all duration-300 hover:shadow-md"
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
+          
+        <div className="bg-gray-50 p-3 sm:p-4 border-t border-gray-200">
+          <div className="flex items-center gap-1.5 sm:gap-2">
+            <CheckCircle className="h-3 w-3 sm:h-4 sm:w-4 text-[#7497bd]" />
+            <span className="text-xs sm:text-sm text-gray-700">Typical registration time: <span className="font-medium">3-5 minutes</span></span>
+          </div>
+        </div>
+      </motion.div>
+
+      {/* Trust Indicators Section */}
+      <motion.div 
+        className="bg-white rounded-lg sm:rounded-xl shadow-md border border-gray-200 overflow-hidden"
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.4, delay: 0.2 }}
+      >
+        {/* Section Header - Always visible */}
+        <div 
+          className="p-4 sm:p-5 border-b border-gray-200 flex items-center justify-between cursor-pointer bg-gray-50 hover:bg-gray-100 transition-colors"
+          onClick={() => setShowTrustIndicators(!showTrustIndicators)}
+        >
+          <h3 className="text-base sm:text-lg font-medium text-gray-900">Why Traders Choose XM Markets</h3>
+            
+          <div>
+            <button className="text-gray-500 hover:text-[#7497bd] transition-colors">
+              <motion.div
+                initial={{ rotate: 0 }}
+                animate={{
+                  rotate: showTrustIndicators ? 180 : 0,
+                  transition: { duration: 0.3 }
+                }}
+              >
+                <ChevronDown className="h-4 w-4 sm:h-5 sm:w-5" />
+              </motion.div>
+            </button>
+          </div>
+        </div>
+        
+        {/* Collapsible Content */}
+        <AnimatePresence>
+          {showTrustIndicators && (
+            <motion.div 
+              initial={{ height: 0, opacity: 0 }} 
+              animate={{ height: 'auto', opacity: 1 }} 
+              exit={{ height: 0, opacity: 0 }}
+              transition={{ duration: 0.3 }}
+              className="overflow-hidden"
             >
-              <feature.icon className="h-8 w-8 text-[#7497bd] flex-shrink-0" />
-              <div>
-                <h4 className="font-bold text-lg mb-1 text-gray-800">{feature.title}</h4>
-                <p className="text-gray-600">{feature.description}</p>
+              <div className="p-4 sm:p-6">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+                  {features.map((feature) => (
+                    <div
+                      key={feature.id}
+                      className="flex items-start gap-2 sm:gap-4 p-3 sm:p-4 rounded-md sm:rounded-lg border border-gray-200 hover:border-[#7497bd] hover:shadow-md bg-white transition-all duration-200"
+                    >
+                      <div className="bg-[#f0f5fb] p-1.5 sm:p-2.5 rounded-md">
+                        <feature.icon className="h-4 w-4 sm:h-5 sm:w-5 text-[#7497bd]" />
+                      </div>
+                      <div>
+                        <h4 className="text-sm sm:text-base font-medium text-gray-900">{feature.title}</h4>
+                        <p className="text-xs sm:text-sm text-gray-600 mt-0.5 sm:mt-1">{feature.description}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+              
+              {/* Social Proof */}
+              <div className="bg-gray-50 p-4 sm:p-5 border-t border-gray-200">
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-4">
+                  {[
+                    { value: "1.5M+", label: "Active Traders" },
+                    { value: "30+", label: "Awards" },
+                    { value: "99.35%", label: "Execution Speed" },
+                    { value: "24/7", label: "Support" }
+                  ].map((stat, idx) => (
+                    <div key={idx} className="bg-white p-3 sm:p-4 rounded-md sm:rounded-lg text-center border border-gray-200 shadow-sm hover:shadow-md transition-shadow">
+                      <p className="text-lg sm:text-xl font-bold text-[#7497bd]">{stat.value}</p>
+                      <p className="text-[10px] sm:text-xs text-gray-600 mt-0.5 sm:mt-1">{stat.label}</p>
+                    </div>
+                  ))}
+                </div>
               </div>
             </motion.div>
-          ))}
-        </div>
+          )}
+        </AnimatePresence>
       </motion.div>
       
       {/* Hidden button for video trigger */}
@@ -206,6 +309,6 @@ export function StepOne({ formData, updateFormData }) {
         className="hidden"
         aria-hidden="true"
       />
-    </motion.div>
+    </div>
   )
 }

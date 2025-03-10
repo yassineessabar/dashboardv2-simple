@@ -90,7 +90,7 @@ export function SidebarProvider({ children }: { children: React.ReactNode }) {
         <div
           className={cn("flex-1 transition-all duration-300 ease-in-out", isCollapsed ? "md:ml-[80px]" : "md:ml-64")}
         >
-          <div className="p-4 max-w-full overflow-x-hidden">{children}</div>
+          <div className="p-4 pt-14 md:pt-4 max-w-full overflow-x-hidden">{children}</div>
         </div>
       </div>
     </SidebarContext.Provider>
@@ -277,14 +277,28 @@ function Sidebar() {
         <SidebarContent />
       </motion.aside>
 
-      <Button
-        variant="outline"
-        size="icon"
-        className="fixed top-4 left-4 z-50 md:hidden"
-        onClick={() => setIsMobileOpen(true)}
-      >
-        <Menu className="h-6 w-6" />
-      </Button>
+      {/* Mobile burger menu - fixed position and always visible */}
+      <div className="fixed top-0 left-0 right-0 z-50 bg-white md:hidden flex items-center p-2 shadow-sm border-b border-gray-100">
+        <Button
+          variant="ghost"
+          size="icon"
+          className="text-gray-700"
+          onClick={() => setIsMobileOpen(true)}
+        >
+          <Menu className="h-6 w-6" />
+        </Button>
+        
+        <div className="flex-1 flex justify-center">
+          <img
+            src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/67984b56824e29d4d17f7d98_image__1_-removebg-preview-p-500-dCWeUC1cV6JJXGdpegIPj1wRHoCEgn.png"
+            alt="Sigmatic Trading Logo"
+            className="h-8 w-auto object-contain"
+          />
+        </div>
+        
+        <div className="w-10"></div> {/* Empty space to balance the layout */}
+      </div>
+      
       <DemoTutorial open={showDemoTutorial} onOpenChange={setShowDemoTutorial} />
     </>
   )
