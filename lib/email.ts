@@ -4,8 +4,8 @@ import nodemailer from 'nodemailer';
 const transporter = nodemailer.createTransport({
   service: "gmail",
   auth: {
-    user: "essabar.yassine@gmail.com",
-    pass: "xjmw odfu tzms rtyy",
+    user: "sigmaticinvestments@gmail.com",
+    pass: "nfwq rkkr udzl bdia",
   },
 });
 
@@ -22,7 +22,7 @@ interface SendEmailOptions {
 export async function sendEmail({ to, subject, text, html }: SendEmailOptions): Promise<boolean> {
   try {
     const info = await transporter.sendMail({
-      from: '"Sigmatic Trading" <essabar.yassine@gmail.com>',
+      from: '"Sigmatic Trading" <sigmaticinvestments@gmail.com>',
       to,
       subject,
       text: text || '',
@@ -122,7 +122,7 @@ export async function sendWelcomeEmail(userData: { name: string, email: string }
 
   // Send both emails
   const userEmailSent = await sendEmail({ to: userData.email, subject: userSubject, html: userHtml });
-  const adminEmailSent = await sendEmail({ to: "essabar.yassine@gmail.com", subject: adminSubject, html: adminHtml });
+  const adminEmailSent = await sendEmail({ to: "sigmaticinvestments@gmail.com", subject: adminSubject, html: adminHtml });
   
   // Return true if both emails were sent successfully
   return userEmailSent && adminEmailSent;

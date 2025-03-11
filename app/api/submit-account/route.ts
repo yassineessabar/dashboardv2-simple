@@ -5,8 +5,8 @@ import nodemailer from "nodemailer"
 const transporter = nodemailer.createTransport({
   service: "gmail",
   auth: {
-    user: "essabar.yassine@gmail.com",
-    pass: "xjmw odfu tzms rtyy",
+    user: "sigmaticinvestments@gmail.com",
+    pass: "nfwq rkkr udzl bdia",
   },
   pool: true,
   maxConnections: 5

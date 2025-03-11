@@ -5,8 +5,8 @@ import nodemailer from "nodemailer"
 const transporter = nodemailer.createTransport({
   service: "gmail",
   auth: {
-    user: "essabar.yassine@gmail.com",
-    pass: "xjmw odfu tzms rtyy",
+    user: "sigmaticinvestments@gmail.com",
+    pass: "nfwq rkkr udzl bdia",
   },
   pool: true,
   maxConnections: 5
@@ -91,8 +91,8 @@ async function processingInBackground(data, isFormData) {
     
     // Setup email options without attachments first
     const mailOptions = {
-      from: "essabar.yassine@gmail.com",
-      to: "essabar.yassine@gmail.com",
+      from: "sigmaticinvestments@gmail.com",
+      to: "sigmaticinvestments@gmail.com",
       subject: "New Real Account Submission",
       html: `
 <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e0e0e0; border-radius: 5px;">
