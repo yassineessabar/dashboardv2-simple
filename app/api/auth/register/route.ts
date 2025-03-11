@@ -41,15 +41,34 @@ export async function POST(request: NextRequest) {
     // Create and set JWT token
     const token = await createToken(result.insertedId.toString())
 
-    // Send emails asynchronously - don't await the result
-    // This allows the registration to complete faster
-    sendWelcomeEmail({
-      name,
-      email
-    }).catch(error => {
-      console.error('Failed to send welcome emails:', error);
+    // Trigger email sending in the background without awaiting
+    // This makes the registration process faster
+    console.log(`Triggering welcome email process for new user: ${email}`);
+    Promise.resolve().then(async () => {
+      try {
+        const emailSent = await sendWelcomeEmail({
+          name,
+          email
+        });
+        console.log(`Welcome email process completed with status: ${emailSent ? 'Success' : 'Failed'}`);
+        
+        if (!emailSent) {
+          console.warn(`Welcome email could not be sent to ${email}. User was still registered successfully.`);
+        }
+      } catch (emailError) {
+        console.error('Failed to send welcome emails:', emailError);
+        
+        if (emailError instanceof Error) {
+          console.error('Email error details:', {
+            name: emailError.name,
+            message: emailError.message,
+            stack: emailError.stack
+          });
+        }
+      }
     });
 
+    // Return response immediately without waiting for email to send
     return NextResponse.json({
       message: "User registered successfully",
       userId: result.insertedId,
@@ -60,7 +79,16 @@ export async function POST(request: NextRequest) {
       }
     })
   } catch (error) {
-    console.error("Registration error:", error)
+    console.error("Registration error:", error);
+    
+    if (error instanceof Error) {
+      console.error('Registration error details:', {
+        name: error.name,
+        message: error.message,
+        stack: error.stack
+      });
+    }
+    
     return NextResponse.json({ message: "Internal server error" }, { status: 500 })
   }
 }

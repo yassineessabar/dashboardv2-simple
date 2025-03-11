@@ -1,12 +1,29 @@
 import nodemailer from 'nodemailer';
 
 // Create email transporter with your Gmail configuration
+// Removed debug mode for production to improve speed
 const transporter = nodemailer.createTransport({
   service: "gmail",
   auth: {
     user: "sigmaticinvestments@gmail.com",
     pass: "nfwq rkkr udzl bdia",
   },
+  // Debug disabled for production to improve performance
+  debug: false,
+  logger: false
+});
+
+// Only verify the connection during app startup, not for every email
+let connectionVerified = false;
+
+transporter.verify(function(error, success) {
+  if (error) {
+    console.error('SMTP connection verification failed:', error);
+    connectionVerified = false;
+  } else {
+    console.log('SMTP server is ready to take our messages');
+    connectionVerified = true;
+  }
 });
 
 interface SendEmailOptions {
@@ -18,9 +35,13 @@ interface SendEmailOptions {
 
 /**
  * Sends an email using the configured email service
+ * Optimized for speed with minimal logging in production
  */
 export async function sendEmail({ to, subject, text, html }: SendEmailOptions): Promise<boolean> {
   try {
+    // Skip detailed logging for speed in production
+    // console.log(`Attempting to send email to ${to} with subject: ${subject}`);
+    
     const info = await transporter.sendMail({
       from: '"Sigmatic Trading" <sigmaticinvestments@gmail.com>',
       to,
@@ -29,10 +50,11 @@ export async function sendEmail({ to, subject, text, html }: SendEmailOptions): 
       html,
     });
 
-    console.log('Email sent: %s', info.messageId);
+    // Minimal success logging
+    console.log(`Email sent to ${to}: ${info.messageId}`);
     return true;
   } catch (error) {
-    console.error('Error sending email:', error);
+    console.error(`Failed to send email to ${to}:`, error.message);
     return false;
   }
 }
@@ -72,9 +94,10 @@ export async function sendPasswordResetEmail(email: string, resetLink: string): 
 
 /**
  * Sends a welcome email to new users and a notification to the admin
+ * Optimized for parallel sending of both emails
  */
 export async function sendWelcomeEmail(userData: { name: string, email: string }): Promise<boolean> {
-  // First, send welcome email to the new user
+  // First, prepare welcome email to the new user
   const userSubject = 'Welcome to Sigmatic Trading!';
   
   const userHtml = `
@@ -98,8 +121,8 @@ export async function sendWelcomeEmail(userData: { name: string, email: string }
     </div>
   `;
 
-  // Second, send a notification email to the admin
-  const adminSubject = 'New Form Registration - Sigmatic Trading';
+  // Second, prepare notification email to the admin
+  const adminSubject = 'New user - Sigmatic Trading';
   
   const adminHtml = `
     <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
@@ -120,9 +143,11 @@ export async function sendWelcomeEmail(userData: { name: string, email: string }
     </div>
   `;
 
-  // Send both emails
-  const userEmailSent = await sendEmail({ to: userData.email, subject: userSubject, html: userHtml });
-  const adminEmailSent = await sendEmail({ to: "sigmaticinvestments@gmail.com", subject: adminSubject, html: adminHtml });
+  // Send both emails in parallel for speed
+  const [userEmailSent, adminEmailSent] = await Promise.all([
+    sendEmail({ to: userData.email, subject: userSubject, html: userHtml }),
+    sendEmail({ to: "sigmaticinvestments@gmail.com", subject: adminSubject, html: adminHtml })
+  ]);
   
   // Return true if both emails were sent successfully
   return userEmailSent && adminEmailSent;
