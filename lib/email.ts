@@ -11,7 +11,7 @@ const transporter = nodemailer.createTransport({
   // Debug disabled for production to improve performance
   debug: false,
   logger: false
-});
+});  
 
 // Only verify the connection during app startup, not for every email
 let connectionVerified = false;

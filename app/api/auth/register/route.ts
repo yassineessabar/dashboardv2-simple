@@ -3,7 +3,7 @@ import clientPromise from "@/lib/mongodb"
 import bcrypt from "bcryptjs"
 import { createToken } from "@/lib/auth"
 import { sendWelcomeEmail } from "@/lib/email"
-
+  
 // Mark this route as dynamic since it uses cookies
 export const dynamic = 'force-dynamic';
 
