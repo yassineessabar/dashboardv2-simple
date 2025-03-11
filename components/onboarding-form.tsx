@@ -112,6 +112,18 @@ export function OnboardingForm() {
     }
   }
 
+  // NEW FUNCTION: Handle clicking on step headers for navigation
+  const handleStepClick = (stepIndex) => {
+    // Only allow clicking on steps that have been completed or the current step + 1
+    if (stepIndex <= currentStep + 1) {
+      // Validate current step before allowing navigation
+      if (stepIndex > currentStep && !validateStep(currentStep)) {
+        return; // Don't allow forward navigation if current step isn't valid
+      }
+      setCurrentStep(stepIndex);
+    }
+  };
+
   const handleNext = () => {
     if (validateStep(currentStep) && currentStep < steps.length - 1) {
       setCurrentStep(currentStep + 1)
@@ -295,15 +307,23 @@ export function OnboardingForm() {
             </div>
           )}
 
-          {/* Step Progress */}
+          {/* Step Progress - UPDATED TO BE CLICKABLE */}
           <div className="mt-6 flex justify-between items-center space-x-4">
             {steps.map((step, idx) => (
-              <div key={step.id} className="flex-1 flex flex-col items-center">
+              <div 
+                key={step.id} 
+                className={`flex-1 flex flex-col items-center ${
+                  idx <= currentStep + 1 ? 'cursor-pointer hover:opacity-80' : 'cursor-not-allowed opacity-60'
+                } transition-opacity`}
+                onClick={() => handleStepClick(idx)}
+              >
                 <div className={`
                   flex items-center justify-center h-10 w-10 rounded-full mb-2
                   ${idx < currentStep ? 'bg-green-500 text-white' : 
                     idx === currentStep ? 'bg-gray-900 text-white ring-4 ring-gray-200' : 
+                    idx <= currentStep + 1 ? 'bg-gray-200 text-gray-500 hover:bg-gray-300' :
                     'bg-gray-200 text-gray-500'}
+                  transition-colors
                 `}>
                   {idx < currentStep ? (
                     <CheckCircle className="h-5 w-5" />

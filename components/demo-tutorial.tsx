@@ -204,13 +204,14 @@ export function DemoTutorial({ open, onOpenChange }: DemoTutorialProps) {
             >
               <h2 className="text-3xl font-bold mb-4">Congratulations!</h2>
               <p className="text-xl mb-8">You've successfully set up your demo account.</p>
+              {/* FIXED: Use asChild to properly allow the anchor to be the root */}
               <Button
-                onClick={handleClose}
+                asChild
                 className="bg-white text-[#7497bd] hover:bg-gray-100 transition-colors py-6 px-8 text-lg font-semibold"
               >
-              <a href="/get-started" rel="noopener noreferrer">
-                Create Real Account Now
-              </a>
+                <a href="/get-started" rel="noopener noreferrer">
+                  Create Real Account Now
+                </a>
               </Button>
             </motion.div>
           )}
@@ -224,4 +225,3 @@ export function DemoTutorial({ open, onOpenChange }: DemoTutorialProps) {
     </Dialog>
   )
 }
-

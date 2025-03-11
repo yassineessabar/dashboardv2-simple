@@ -49,7 +49,13 @@ export function StepOne({ formData, updateFormData }) {
     })
   }
 
-  const handleRegister = () => {
+  // FIXED: Modified handleRegister to prevent default behavior and stop propagation
+  const handleRegister = (e) => {
+    // Prevent default behavior to avoid form submission
+    e.preventDefault()
+    // Stop event propagation to parent components
+    e.stopPropagation()
+    // Open the registration page in a new tab
     window.open("https://www.xmglobal.com/register/profile-account", "_blank")
   }
 
@@ -122,8 +128,10 @@ export function StepOne({ formData, updateFormData }) {
                   Click the button below to open the official XM Markets registration page in a new tab.
                 </p>
                 <div>
+                  {/* FIXED: Added type="button" and updated onClick handler */}
                   <Button
                     onClick={handleRegister}
+                    type="button"
                     className="bg-[#7497bd] hover:bg-[#5a7a9d] text-white px-3 sm:px-5 py-1.5 sm:py-2 rounded-md text-xs sm:text-sm flex items-center gap-1.5 sm:gap-2 transition-colors"
                   >
                     Open Registration Page
