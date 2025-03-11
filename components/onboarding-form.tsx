@@ -19,6 +19,54 @@ import {
 import { CheckCircle, ChevronLeft, ChevronRight, User, Mail, LockKeyhole, Rocket } from "lucide-react"
 import { useRouter } from "next/navigation"
 
+// Define the responsive header component inline
+const ResponsiveStepHeader = ({ currentStep }) => {
+  // Step title and subtitle data
+  const stepContent = [
+    { 
+      title: "Welcome", 
+      subtitle: "Get started with trading" 
+    },
+    { 
+      title: "Registration", 
+      subtitle: "Create your broker account" 
+    },
+    { 
+      title: "Verification", 
+      subtitle: "Verify your identity" 
+    },
+    { 
+      title: "Deposit", 
+      subtitle: "Fund your account" 
+    }
+  ];
+
+  // Get content for current step
+  const currentContent = stepContent[currentStep];
+
+  return (
+    <div className="w-full p-4 bg-white border-b border-gray-200 md:hidden">
+      <AnimatePresence mode="wait">
+        <motion.div
+          key={currentStep}
+          initial={{ opacity: 0, y: 5 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -5 }}
+          transition={{ duration: 0.2 }}
+          className="text-center"
+        >
+          <h2 className="text-xl font-semibold text-gray-900">
+            {currentContent.title}
+          </h2>
+          <p className="text-sm text-gray-600 mt-1">
+            {currentContent.subtitle}
+          </p>
+        </motion.div>
+      </AnimatePresence>
+    </div>
+  );
+};
+
 const steps = [
   { id: 0, title: "Welcome", icon: <Rocket className="h-5 w-5" /> },
   { id: 1, title: "Registration", icon: <User className="h-5 w-5" /> },
@@ -277,8 +325,8 @@ export function OnboardingForm() {
 
   return (
     <div className="min-h-screen w-full flex flex-col">
-      {/* Top header with step indicators */}
-      <div className="bg-white border-b border-gray-200 p-6">
+      {/* Top header with step indicators - Hidden on mobile */}
+      <div className="bg-white border-b border-gray-200 p-6 hidden md:block">
         <div className="container mx-auto">
           <div className="flex items-center justify-between">
             <div className="flex items-center">
@@ -348,11 +396,46 @@ export function OnboardingForm() {
         </div>
       </div>
       
+      {/* Mobile header - only visible on mobile */}
+      <div className="md:hidden bg-white border-b border-gray-200">
+        <div className="container mx-auto p-4 flex items-center justify-between">
+          <div className="flex items-center">
+            <div className="h-6 w-6 mr-2">
+              <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M3 9L12 5L21 9L12 13L3 9Z" fill="#333" stroke="#333" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                <path d="M3 14L12 18L21 14" stroke="#333" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+            </div>
+            <h1 className="text-lg font-semibold text-gray-900">Trading Setup</h1>
+          </div>
+          
+          <Button variant="ghost" size="sm" className="text-gray-600 p-1 h-8" onClick={() => router.push("/")}>
+            <ChevronLeft className="h-4 w-4" />
+            <span className="sr-only md:not-sr-only ml-1">Back</span>
+          </Button>
+        </div>
+        
+        {/* Mobile step indicator - simple progress bar */}
+        <div className="w-full bg-gray-200 h-1">
+          <motion.div
+            className="h-full bg-gray-900"
+            initial={{ width: 0 }}
+            animate={{ 
+              width: `${((currentStep + 1) / steps.length) * 100}%`,
+            }}
+            transition={{ duration: 0.3 }}
+          />
+        </div>
+      </div>
+      
+      {/* Mobile step title component */}
+      <ResponsiveStepHeader currentStep={currentStep} />
+      
       {/* Main content area */}
       <div className="flex-1 flex flex-col container mx-auto">
         <Card className="flex-1 rounded-none border-0 shadow-none">
           {/* Main content */}
-          <div className="p-6 md:p-10 overflow-auto flex-1">
+          <div className="p-4 md:p-10 overflow-auto flex-1">
             <form onSubmit={handleSubmit} className="space-y-6">              
               {/* Step content with animation */}
               <AnimatePresence mode="wait">
@@ -370,7 +453,7 @@ export function OnboardingForm() {
           </div>
           
           {/* Footer with navigation buttons */}
-          <div className="border-t border-gray-200 p-6 flex justify-between items-center bg-white">
+          <div className="border-t border-gray-200 p-4 md:p-6 flex justify-between items-center bg-white">
             <Button
               type="button"
               variant="ghost"
@@ -378,11 +461,11 @@ export function OnboardingForm() {
               disabled={currentStep === 0}
               className={`${currentStep === 0 ? 'opacity-0 pointer-events-none' : ''} text-gray-600`}
             >
-              <ChevronLeft className="mr-2 h-4 w-4" />
-              Back
+              <ChevronLeft className="mr-1 md:mr-2 h-4 w-4" />
+              <span className="sr-only md:not-sr-only">Back</span>
             </Button>
             
-            <div className="flex-1 flex justify-center px-4">
+            <div className="hidden md:flex flex-1 justify-center px-4">
               <div className="w-full max-w-xs bg-gray-200 h-1 rounded-full overflow-hidden flex items-center">
                 <motion.div
                   className="h-full bg-gray-900 rounded-full"
@@ -398,13 +481,13 @@ export function OnboardingForm() {
             <Button
               type="button"
               onClick={handleSubmit}
-              className={`${isLastStep ? 'bg-green-600 hover:bg-green-700' : 'bg-gray-900 hover:bg-gray-800'} text-white`}
+              className={`${isLastStep ? 'bg-green-600 hover:bg-green-700' : 'bg-gray-900 hover:bg-gray-800'} text-white text-sm md:text-base py-2 px-3 md:py-2 md:px-4`}
             >
               {isSubmitting ? 
                 "Processing..." : 
                 isLastStep ? "Complete Setup" : "Continue"
               }
-              {!isLastStep && !isSubmitting && <ChevronRight className="ml-2 h-4 w-4" />}
+              {!isLastStep && !isSubmitting && <ChevronRight className="ml-1 md:ml-2 h-4 w-4" />}
             </Button>
           </div>
         </Card>

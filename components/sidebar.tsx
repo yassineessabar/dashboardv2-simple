@@ -88,9 +88,13 @@ export function SidebarProvider({ children }: { children: React.ReactNode }) {
       <div className="flex min-h-screen">
         <Sidebar />
         <div
-          className={cn("flex-1 transition-all duration-300 ease-in-out", isCollapsed ? "md:ml-[80px]" : "md:ml-64")}
+          className={cn(
+            "flex-1 transition-all duration-300 ease-in-out", 
+            isCollapsed ? "md:ml-[80px]" : "md:ml-64",
+            "pt-14 md:pt-0" // Add top padding for mobile header
+          )}
         >
-          <div className="p-4 pt-14 md:pt-4 max-w-full overflow-x-hidden">{children}</div>
+          <div className="p-4 max-w-full overflow-x-hidden">{children}</div>
         </div>
       </div>
     </SidebarContext.Provider>
@@ -103,6 +107,22 @@ function Sidebar() {
   const router = useRouter()
   const { toast } = useToast()
   const [showDemoTutorial, setShowDemoTutorial] = useState(false)
+  const [windowWidth, setWindowWidth] = useState(0)
+
+  // Track window width for responsive adjustments
+  useEffect(() => {
+    const handleResize = () => {
+      setWindowWidth(window.innerWidth)
+    }
+    
+    // Set initial width
+    if (typeof window !== 'undefined') {
+      setWindowWidth(window.innerWidth)
+    }
+    
+    window.addEventListener("resize", handleResize)
+    return () => window.removeEventListener("resize", handleResize)
+  }, [])
 
   const handleLogout = async () => {
     try {
@@ -135,7 +155,7 @@ function Sidebar() {
 
   const SidebarContent = () => (
     <>
-      <div className="flex items-center justify-between p-4">
+      <div className="flex items-center justify-between p-4 mb-2">
         <AnimatePresence initial={false}>
           {!isCollapsed && (
             <motion.div
@@ -165,14 +185,15 @@ function Sidebar() {
         </Button>
       </div>
 
-      <nav className="flex-1 space-y-1 px-3 py-4">
+      {/* Navigation with increased spacing */}
+      <nav className="flex-1 space-y-3 px-3 py-4 overflow-y-auto">
         {menuItems.map(
           (item) =>
             !item.hidden && (
               <Link key={item.href} href={item.href} onClick={() => setIsMobileOpen(false)}>
                 <motion.div
                   className={cn(
-                    "flex items-center rounded-lg px-3 py-2 text-sm font-medium transition-colors",
+                    "flex items-center rounded-lg px-3 py-3 text-sm font-medium transition-colors",
                     pathname === item.href
                       ? "bg-blue-100 text-blue-600"
                       : "text-gray-700 hover:bg-gray-100 hover:text-gray-900",
@@ -208,7 +229,7 @@ function Sidebar() {
         {/* Logout Button - Added as a direct item in the navigation */}
         <motion.div
           className={cn(
-            "flex items-center rounded-lg px-3 py-2 text-sm font-medium transition-colors cursor-pointer mt-2 bg-red-50 text-red-600 hover:bg-red-100"
+            "flex items-center rounded-lg px-3 py-3 text-sm font-medium transition-colors cursor-pointer mt-4 bg-red-50 text-red-600 hover:bg-red-100"
           )}
           whileHover={{ scale: 1.03 }}
           whileTap={{ scale: 0.98 }}
@@ -231,13 +252,13 @@ function Sidebar() {
         </motion.div>
       </nav>
 
-      <div className="mt-auto px-4 pb-4">
+      <div className="mt-auto px-4 pb-6">
         <Button
           variant="default"
-          size="lg"
+          size={windowWidth < 768 || !isCollapsed ? "lg" : "icon"}
           className={cn(
             "w-full bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white transition-all duration-300 ease-in-out transform hover:scale-105",
-            isCollapsed && !isMobileOpen ? "px-2" : "px-4",
+            isCollapsed && !isMobileOpen ? "px-2 py-6" : "px-4",
           )}
           onClick={() => setShowDemoTutorial(true)}
         >
@@ -263,7 +284,7 @@ function Sidebar() {
   return (
     <>
       <Sheet open={isMobileOpen} onOpenChange={setIsMobileOpen}>
-        <SheetContent side="left" className="p-0 w-64">
+        <SheetContent side="left" className="p-0 w-72 max-w-[85vw]">
           <SidebarContent />
         </SheetContent>
       </Sheet>
