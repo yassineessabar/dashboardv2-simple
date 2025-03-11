@@ -3,7 +3,7 @@ import clientPromise from "@/lib/mongodb"
 import bcrypt from "bcryptjs"
 import { createToken } from "@/lib/auth"
 import { sendWelcomeEmail } from "@/lib/email"
-  
+
 // Mark this route as dynamic since it uses cookies
 export const dynamic = 'force-dynamic';
 
@@ -41,34 +41,23 @@ export async function POST(request: NextRequest) {
     // Create and set JWT token
     const token = await createToken(result.insertedId.toString())
 
-    // Trigger email sending in the background without awaiting
-    // This makes the registration process faster
-    console.log(`Triggering welcome email process for new user: ${email}`);
-    Promise.resolve().then(async () => {
+    // Send welcome emails using setTimeout to make it non-blocking
+    // This ensures the process stays alive long enough to send emails
+    // while not delaying the response to the user
+    setTimeout(async () => {
       try {
+        console.log(`Sending welcome email to: ${email}`);
         const emailSent = await sendWelcomeEmail({
           name,
           email
         });
-        console.log(`Welcome email process completed with status: ${emailSent ? 'Success' : 'Failed'}`);
-        
-        if (!emailSent) {
-          console.warn(`Welcome email could not be sent to ${email}. User was still registered successfully.`);
-        }
+        console.log(`Welcome email status: ${emailSent ? 'Success' : 'Failed'}`);
       } catch (emailError) {
         console.error('Failed to send welcome emails:', emailError);
-        
-        if (emailError instanceof Error) {
-          console.error('Email error details:', {
-            name: emailError.name,
-            message: emailError.message,
-            stack: emailError.stack
-          });
-        }
       }
-    });
+    }, 100); // Small delay to ensure response is sent first
 
-    // Return response immediately without waiting for email to send
+    // Return success response immediately
     return NextResponse.json({
       message: "User registered successfully",
       userId: result.insertedId,
