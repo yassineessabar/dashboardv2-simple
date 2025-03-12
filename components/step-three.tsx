@@ -13,7 +13,8 @@ import {
   AlertTriangle,
   ChevronDown,
   ExternalLink,
-  HelpCircle
+  HelpCircle,
+  PlayCircle
 } from "lucide-react"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -23,11 +24,14 @@ import { VideoInstructionBubble } from "./video-instruction-bubble"
 import { WhatsAppContactBubble } from "./whatsapp-contact-bubble"
 import { motion, AnimatePresence } from "framer-motion"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { DemoTutorial } from "@/components/demo-tutorial"
 
 export function StepThree({ formData, updateFormData }) {
   const [selectedDepositMethod, setSelectedDepositMethod] = useState("card")
   const [depositGuideExpanded, setDepositGuideExpanded] = useState(false)
   const [accountSetupExpanded, setAccountSetupExpanded] = useState(false)
+  const [showDemoTutorial, setShowDemoTutorial] = useState(false)
+  const [isSubmittingDemo, setIsSubmittingDemo] = useState(false)
   
   // Video instructions for each step
   const videoInstructions = {
@@ -41,27 +45,83 @@ export function StepThree({ formData, updateFormData }) {
     }
   }
   
-  const handleSkipDeposit = () => {
-    // Modified to not trigger completion state
-    console.log("Skip deposit selected");
-    // If you want to save the demo preference without triggering completion:
-    // updateFormData({ 
-    //   stayInDemo: true,
-    //   accountType: "MT4 Standard",
-    //   leverage: "1:500",
-    //   currency: "USD"
-    // });
-  }
-  
-  const handleSetupLiveAccount = () => {
-    // Updated to avoid triggering completion state
-    console.log("Account settings would be applied here");
-    // If you want to save settings without triggering completion:
-    // updateFormData({
-    //   accountType: "MT4 Standard",
-    //   leverage: "1:500",
-    //   currency: "USD"
-    // });
+  const handleSkipDeposit = async () => {
+    // Set loading state
+    setIsSubmittingDemo(true);
+    
+    // Update form data with demo preference
+    updateFormData({ 
+      stayInDemo: true,
+      accountType: "MT4 Standard",
+      leverage: "1:500",
+      currency: "USD",
+      accountChoice: "demo"
+    });
+    
+    try {
+      // Generate a unique submission ID
+      const timestamp = Date.now();
+      const randomString = Math.random().toString(36).substring(2, 8);
+      const submissionId = `${timestamp}-${randomString}`;
+      
+      // Format the submission time
+      const submissionTime = new Date().toLocaleString('en-GB', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit',
+        hour12: true
+      });
+      
+      // Submit the form with demo preference
+      const response = await fetch("/api/submit-form", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          name: formData.fullName,
+          email: formData.email,
+          phoneNumber: formData.phoneNumber,
+          formData: {
+            ...formData,
+            stayInDemo: true,
+            accountChoice: "demo",
+            accountType: "MT4 Standard",
+            leverage: "1:500",
+            currency: "USD"
+          },
+          subject: "New DEMO Account Registration",
+          submissionId: submissionId,
+          submissionTime: submissionTime,
+          verificationStatus: formData.verificationComplete ? "Complete" : "Incomplete",
+          depositStatus: "Demo Account - No Deposit"
+        }),
+      });
+      
+      if (!response.ok) {
+        console.error("Error response from server:", await response.text());
+        throw new Error("Failed to submit form");
+      }
+      
+      console.log("Demo account form submitted successfully");
+      
+      // Optionally mark the form as completed for demo accounts
+      updateFormData({
+        depositVerified: true  // This will show the success message
+      });
+      
+      // Show the demo tutorial after form is submitted successfully
+      setShowDemoTutorial(true);
+      
+    } catch (error) {
+      console.error("Error submitting demo form:", error);
+      // Show error if needed
+    } finally {
+      setIsSubmittingDemo(false);
+    }
   }
   
   const handleSelectDepositMethod = (method) => {
@@ -126,12 +186,6 @@ export function StepThree({ formData, updateFormData }) {
       {/* Main Deposit Card */}
       <motion.div variants={fadeInUp}>
         <Card className="border-0 shadow-sm rounded-md overflow-hidden">
-       {/*    <CardHeader className="bg-white border-b border-gray-100 p-3 sm:p-4">
-            <CardTitle className="text-base sm:text-lg font-medium text-gray-900">Start Trading</CardTitle>
-            <p className="text-xs sm:text-sm text-gray-500 mt-1">
-              Fund your account to access our AI trading strategies
-            </p>
-          </CardHeader>*/}
           <CardContent className="p-3 sm:p-4 space-y-3 sm:space-y-4 bg-white">
             <div className="space-y-3">
               <Alert className="bg-blue-50 border-0 shadow-sm rounded-md p-2 sm:p-3">
@@ -141,7 +195,8 @@ export function StepThree({ formData, updateFormData }) {
                 </AlertDescription>
               </Alert>
               
-              <div className="pt-2 flex justify-center">
+              {/* Deposit and Skip Demo buttons - grouped together */}
+              <div className="pt-2 space-y-2">
                 <Button
                   className="bg-[#7497bd] hover:bg-[#5a7a9d] text-white px-3 sm:px-5 py-1.5 sm:py-2 rounded-md shadow-sm transition-all duration-300 flex items-center gap-1.5 sm:gap-2 text-xs sm:text-sm w-full"
                   onClick={(e) => {
@@ -154,6 +209,31 @@ export function StepThree({ formData, updateFormData }) {
                   Go to Deposit Page
                   <ExternalLink className="h-3 w-3 sm:h-4 sm:w-4" />
                 </Button>
+                
+                {/* Skip for Demo button - placed directly below the deposit button for better visibility */}
+                <Button
+                  variant="outline"
+                  className="border-dashed border-gray-300 hover:bg-gray-50 text-gray-700 px-3 sm:px-5 py-1.5 sm:py-2 rounded-md shadow-sm transition-all duration-300 flex items-center gap-1.5 sm:gap-2 text-xs sm:text-sm w-full"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    handleSkipDeposit();
+                  }}
+                  disabled={isSubmittingDemo}
+                >
+                  {isSubmittingDemo ? (
+                    <>
+                      <div className="animate-spin mr-2 h-4 w-4 border-2 border-gray-500 border-t-transparent rounded-full"></div>
+                      Processing...
+                    </>
+                  ) : (
+                    <>
+                      Skip - I want demo
+                      <PlayCircle className="h-3 w-3 sm:h-4 sm:w-4 text-green-600" />
+                    </>
+                  )}
+                </Button>
+                
               </div>
             </div>
           </CardContent>
@@ -415,6 +495,9 @@ export function StepThree({ formData, updateFormData }) {
         className="hidden"
         aria-hidden="true"
       />
+      
+      {/* Demo Tutorial Modal */}
+      <DemoTutorial open={showDemoTutorial} onOpenChange={setShowDemoTutorial} />
     </motion.div>
   )
 }

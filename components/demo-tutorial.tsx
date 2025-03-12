@@ -209,8 +209,8 @@ export function DemoTutorial({ open, onOpenChange }: DemoTutorialProps) {
                 asChild
                 className="bg-white text-[#7497bd] hover:bg-gray-100 transition-colors py-6 px-8 text-lg font-semibold"
               >
-                <a href="/get-started" rel="noopener noreferrer">
-                  Create Real Account Now
+                <a href="/" rel="noopener noreferrer">
+                  See historical performance
                 </a>
               </Button>
             </motion.div>

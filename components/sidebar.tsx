@@ -34,7 +34,7 @@ import { useToast } from "@/components/ui/use-toast"
 const menuItems = [
   { href: "/", icon: LayoutDashboard, label: "Dashboard" },
   { href: "/how-it-works", icon: Lightbulb, label: "How It Works" }, // New "How It Works" item
-  { href: "/get-started", icon: PlayCircle, label: "Create Real Account" },
+  { href: "/get-started", icon: PlayCircle, label: "Get started" },
   { href: "/trading", icon: LineChart, label: "Trading Accounts", hidden: true },
   { href: "/deposit", icon: Wallet, label: "Deposit", hidden: true },
   { href: "/withdraw", icon: LogOut, label: "Withdraw", hidden: true },
