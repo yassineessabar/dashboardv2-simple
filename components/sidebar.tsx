@@ -21,6 +21,7 @@ import {
   AlertCircle,
   X,
   Info,
+  Lightbulb, // Added for "How It Works" icon
 } from "lucide-react"
 import { motion, AnimatePresence } from "framer-motion"
 import { cn } from "@/lib/utils"
@@ -32,6 +33,7 @@ import { useToast } from "@/components/ui/use-toast"
 // Add the logout menu item directly to your menu items array
 const menuItems = [
   { href: "/", icon: LayoutDashboard, label: "Dashboard" },
+  { href: "/how-it-works", icon: Lightbulb, label: "How It Works" }, // New "How It Works" item
   { href: "/get-started", icon: PlayCircle, label: "Create Real Account" },
   { href: "/trading", icon: LineChart, label: "Trading Accounts", hidden: true },
   { href: "/deposit", icon: Wallet, label: "Deposit", hidden: true },
@@ -190,7 +192,7 @@ function Sidebar() {
         {menuItems.map(
           (item) =>
             !item.hidden && (
-              <Link key={item.href} href={item.href} onClick={() => setIsMobileOpen(false)}>
+              <Link key={item.href} href={item.href} onClick={() => setIsMobileOpen(false)} {...(item.linkProps || {})}>
                 <motion.div
                   className={cn(
                     "flex items-center rounded-lg px-3 py-3 text-sm font-medium transition-colors",

@@ -164,8 +164,8 @@ export function DemoTutorial({ open, onOpenChange }: DemoTutorialProps) {
           {!showCongrats ? (
             <motion.div key="tutorial" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
               <div className="bg-gradient-to-br from-[#7497bd] to-[#5a7a9d] text-white p-6">
-                <h2 className="text-2xl font-bold mb-2">Discover Demo Trading</h2>
-                <p className="text-sm opacity-90">Experience risk-free trading with our demo account</p>
+                <h2 className="text-2xl font-bold mb-2">Try Sigmatic AI with a Demo Account</h2>
+                <p className="text-sm opacity-90">Experience risk-free trading powered by Sigmatic AI.</p>
               </div>
               <div className="p-6">
                 <div className="mb-6">

@@ -3,7 +3,7 @@
 import { useState, useCallback, useEffect } from "react"
 import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { StepZero } from "@/components/step-zero"
+// import { StepZero } from "@/components/step-zero" // Commented out welcome page
 import { StepOne } from "@/components/step-one"
 import { StepTwo } from "@/components/step-two"
 import { StepThree } from "@/components/step-three"
@@ -23,10 +23,10 @@ import { useRouter } from "next/navigation"
 const ResponsiveStepHeader = ({ currentStep }) => {
   // Step title and subtitle data
   const stepContent = [
-    { 
-      title: "Welcome", 
-      subtitle: "Get started with trading" 
-    },
+    // { 
+    //   title: "Welcome", 
+    //   subtitle: "Get started with trading" 
+    // }, // Commented out welcome step
     { 
       title: "Registration", 
       subtitle: "Create your broker account" 
@@ -68,10 +68,10 @@ const ResponsiveStepHeader = ({ currentStep }) => {
 };
 
 const steps = [
-  { id: 0, title: "Welcome", icon: <Rocket className="h-5 w-5" /> },
-  { id: 1, title: "Registration", icon: <User className="h-5 w-5" /> },
-  { id: 2, title: "Verification", icon: <Mail className="h-5 w-5" /> },
-  { id: 3, title: "Deposit", icon: <LockKeyhole className="h-5 w-5" /> },
+  // { id: 0, title: "Welcome", icon: <Rocket className="h-5 w-5" /> }, // Commented out welcome step
+  { id: 0, title: "Registration", icon: <User className="h-5 w-5" /> },
+  { id: 1, title: "Verification", icon: <Mail className="h-5 w-5" /> },
+  { id: 2, title: "Deposit", icon: <LockKeyhole className="h-5 w-5" /> },
 ]
 
 export function OnboardingForm() {
@@ -98,6 +98,8 @@ export function OnboardingForm() {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [sessionUser, setSessionUser] = useState(null)
   const [isLoading, setIsLoading] = useState(true)
+  const [isUserAuthenticated, setIsUserAuthenticated] = useState(false)
+  const [showAuthPrompt, setShowAuthPrompt] = useState(false)
 
   // Fetch the current user profile when component mounts
   useEffect(() => {
@@ -109,6 +111,7 @@ export function OnboardingForm() {
           const data = await response.json()
           if (data.user) {
             setSessionUser(data.user)
+            setIsUserAuthenticated(true)
             // Update form data with user information
             setFormData(prev => ({
               ...prev,
@@ -117,24 +120,23 @@ export function OnboardingForm() {
             }))
           } else {
             console.error("No user data found in profile response")
+            setShowAuthPrompt(true)
           }
         } else {
           console.error("Failed to fetch user profile:", response.status)
-          // Handle unauthorized or other error states
-          if (response.status === 401) {
-            // Redirect to login if unauthorized
-            router.push("/login")
-          }
+          // Changed from redirecting to login to showing auth prompt
+          setShowAuthPrompt(true)
         }
       } catch (error) {
         console.error("Error fetching user profile:", error)
+        setShowAuthPrompt(true)
       } finally {
         setIsLoading(false)
       }
     }
 
     fetchUserProfile()
-  }, [router])
+  }, [])
 
   const updateFormData = useCallback((newData) => {
     setFormData((prevData) => ({
@@ -148,11 +150,9 @@ export function OnboardingForm() {
       case 0:
         return true // No validation needed for step 0
       case 1:
-        return true // No validation needed for step 1
-      case 2:
         // Modified to allow progression without requiring verification to be complete
         return true
-      case 3:
+      case 2:
         // Always allow submission on the final step
         return true
       default:
@@ -187,7 +187,7 @@ export function OnboardingForm() {
   const handleSubmit = async (e) => {
     e.preventDefault()
     if (validateStep(currentStep)) {
-      // We're on the last step (Deposit - index 3)
+      // We're on the last step (Deposit - index 2)
       if (currentStep === steps.length - 1) {
         if (isSubmitting) return // Prevent multiple submissions
         
@@ -296,13 +296,13 @@ export function OnboardingForm() {
 
   const renderStep = () => {
     switch (currentStep) {
+      // case 0:
+      //   return <StepZero formData={formData} updateFormData={updateFormData} /> // Commented out welcome step
       case 0:
-        return <StepZero formData={formData} updateFormData={updateFormData} />
-      case 1:
         return <StepOne formData={formData} updateFormData={updateFormData} sessionUser={sessionUser} />
-      case 2:
+      case 1:
         return <StepTwo formData={formData} updateFormData={updateFormData} />
-      case 3:
+      case 2:
         return <StepThree formData={formData} updateFormData={updateFormData} />
       default:
         return null
@@ -319,6 +319,44 @@ export function OnboardingForm() {
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-900 mx-auto"></div>
           <p className="mt-4 text-gray-600">Loading your profile...</p>
         </div>
+      </div>
+    )
+  }
+
+  // Show auth prompt if user is not authenticated
+  if (showAuthPrompt) {
+    return (
+      <div className="min-h-screen w-full flex items-center justify-center bg-gray-50 p-4">
+        <Card className="max-w-md w-full">
+          <div className="p-6 text-center">
+            <h2 className="text-2xl font-bold mb-4">Authentication Required</h2>
+            <p className="text-gray-600 mb-6">
+              You need to sign in or create an account to access the trading setup process.
+            </p>
+            <div className="space-y-3">
+              <Button 
+                className="w-full bg-[#7497bd] hover:bg-[#5a7a9d]"
+                onClick={() => router.push("/auth?mode=signin")}
+              >
+                Sign In
+              </Button>
+              <Button 
+                variant="outline" 
+                className="w-full"
+                onClick={() => router.push("/auth?mode=signup")}
+              >
+                Create Account
+              </Button>
+              <Button 
+                variant="ghost" 
+                className="w-full"
+                onClick={() => router.push("/")}
+              >
+                Return to Home
+              </Button>
+            </div>
+          </div>
+        </Card>
       </div>
     )
   }
@@ -384,10 +422,10 @@ export function OnboardingForm() {
                     {step.title}
                   </h3>
                   <p className={`text-xs mt-1 ${idx <= currentStep ? 'text-gray-600' : 'text-gray-400'}`}>
-                    {idx === 0 && "Get started with trading"}
-                    {idx === 1 && "Create your broker account"}
-                    {idx === 2 && "Verify your identity"}
-                    {idx === 3 && "Fund your account"}
+                    {/* {idx === 0 && "Get started with trading"} */}
+                    {idx === 0 && "Create your broker account"}
+                    {idx === 1 && "Verify your identity"}
+                    {idx === 2 && "Fund your account"}
                   </p>
                 </div>
               </div>

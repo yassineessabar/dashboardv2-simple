@@ -99,7 +99,7 @@ function AuthPageContent() {
         })
 
         if (loginResponse.ok) {
-          router.push("/demo-tutorial")
+          router.push("/get-started")
           router.refresh()
         } else {
           // If auto-login fails, redirect to login
@@ -173,7 +173,7 @@ function AuthPageContent() {
                   <Label htmlFor="phone">WhatsApp Number</Label>
                   <div className="mt-1 flex rounded-md shadow-sm">
                     <Select value={countryCode} onValueChange={setCountryCode}>
-                      <SelectTrigger className="w-[90px] sm:w-[120px]">
+                      <SelectTrigger className="w-[100px] min-w-[100px] sm:w-[120px]">
                         <SelectValue placeholder="+44" />
                       </SelectTrigger>
                       <SelectContent>
