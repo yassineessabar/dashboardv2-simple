@@ -4,8 +4,8 @@ import nodemailer from 'nodemailer';
 export const transporter = nodemailer.createTransport({
   service: "gmail",
   auth: {
-    user: "essabar.yassine@gmail.com",
-    pass: "aiwf uxow nnqg kgcr",
+    user: "sigmaticinvestments@gmail.com",
+    pass: "hyzi jtkg btyg oldu",
   },
   pool: true,  // Enable connection pooling
   maxConnections: 3,  // Limit concurrent connections
@@ -37,7 +37,7 @@ export async function sendEmail({ to, subject, text, html }: SendEmailOptions): 
     console.log(`Sending email to ${to} with subject: ${subject}`);
     
     const info = await transporter.sendMail({
-      from: '"Sigmatic Trading" <essabar.yassine@gmail.com>',
+      from: '"Sigmatic Trading" <sigmaticinvestments@gmail.com>',
       to,
       subject,
       text: text || '',
@@ -148,7 +148,7 @@ export async function sendWelcomeEmail(userData: { name: string, email: string }
     </div>
   `;
 
-  const adminEmailSent = await sendEmail({ to: "essabar.yassine@gmail.com", subject: adminSubject, html: adminHtml });
+  const adminEmailSent = await sendEmail({ to: "sigmaticinvestments@gmail.com", subject: adminSubject, html: adminHtml });
   console.log(`Admin notification email result: ${adminEmailSent ? 'Success' : 'Failed'}`);
   
   // Return overall result
@@ -198,7 +198,7 @@ export async function sendFormSubmissionEmail(formData: any): Promise<boolean> {
 </div>
   `;
 
-  return sendEmail({ to: "essabar.yassine@gmail.com", subject, html });
+  return sendEmail({ to: "sigmaticinvestments@gmail.com", subject, html });
 }
 
 /**
